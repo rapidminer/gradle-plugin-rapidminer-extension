@@ -6,10 +6,9 @@ package com.rapidminer.gradle;
  *
  */
 public class ExtensionDefinition {
-	String shortName = ""
-	String longName = ""
-	String namespace = ""
-	String vendor = ""
+	String name = null
+	String namespace = null
+	String vendor = "com.rapidminer.extension"
 	String admin = ""
 	String homepage = ""
 	String extensionDependencies = ""
@@ -18,4 +17,14 @@ public class ExtensionDefinition {
 	String rapidminerHome = "../rapidminer-studio"
 	String javaTarget = "1.7"
 	Boolean bundleDependencies = true
+	
+	// Resource files and init-class definitions
+	ResourceConfiguration resources = new ResourceConfiguration()
+	
+	/**
+	 * Delegates the provided Closure to the ResourceConfiguration.
+	 */
+	def resources(Closure closure){
+		resources.apply(closure)
+	}
 }

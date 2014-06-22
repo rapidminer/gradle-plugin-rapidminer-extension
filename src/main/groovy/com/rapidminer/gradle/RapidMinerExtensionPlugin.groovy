@@ -17,7 +17,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 
 		// create 'extension' project extension
 		project.extensions.create("extension", ExtensionDefinition)
-		
+
 		configureProject(project);
 	}
 
@@ -29,7 +29,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			apply plugin: 'java'
 			apply plugin: 'eclipse'
 			apply plugin: 'base'
-			
+
 			defaultTasks 'install'
 
 			// minimize changes, at least for now (gradle uses 'build' by default)
@@ -48,18 +48,28 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 
 			eclipse.classpath.plusConfigurations += configurations.provided
 			// ####################
-			
+
 			// Create 'install' task, will be configured later
 			// Copies extension jar created by 'jar' task to the '/lib/plugins' directory of RapidMiner
-			tasks.create(name:'install', type: Copy, dependsOn: 'jar')
-			
-			// Configuring the properties below can only be accomplished after 
+			tasks.create(name:'install', type: Copy, dependsOn: jar)
+
+			// Configuring the properties below can only be accomplished after
 			// 'extension' has been configured
 			afterEvaluate {
 
+				// check if extension name has been defined
+				assert project.extension.name
+
+				// create namespace from extension name if no namespace has been defined
+				if(!extension.namespace) {
+					extension.namespace = extension.name.toLowerCase().replace(" ", "-");
+				}
+
+				// declare java version compatibility
 				sourceCompatibility = extension.javaTarget
 				targetCompatibility = extension.javaTarget
 
+				// define extension vendor as publishing group
 				group = extension.vendor
 
 				// add RapidMiner as dependency
@@ -70,7 +80,11 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 					into extension.rapidminerHome + "/lib/plugins"
 					from jar
 				}
-				
+
+				// extensions must specify init class and operator definition file
+				assert extension.resources.initClass
+				assert extension.resources.operatorDefinition
+
 				// configure jar output
 				jar {
 					// if activated add runtime dependencies to jar package
@@ -87,10 +101,10 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 						attributes(
 								"Manifest-Version": 		"1.0",
 								"Implementation-Vendor": 	project.extension.vendor,
-								"Implementation-Title":		project.extension.longName,
+								"Implementation-Title":		project.extension.name,
 								"Implementation-URL":		project.extension.homepage,
 								"Implementation-Version": 	version,
-								"Specification-Title": 		project.extension.longName,
+								"Specification-Title": 		project.extension.name,
 								"Specification-Version":	version,
 								"RapidMiner-Version":		project.extension.rapidminerVersion,
 								"RapidMiner-Type":			"RapidMiner_Extension",
@@ -99,14 +113,14 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 								// Definition of important files
 								"Extension-ID":				"rmx_" + project.extension.namespace,
 								"Namespace":				project.extension.namespace,
-								"Initialization-Class":		initClass,
-								"IOObject-Descriptor":		objectDefinition,
-								"Operator-Descriptor":		operatorDefinition,
-								"ParseRule-Descriptor":		parseRuleDefinition,
-								"Group-Descriptor":			groupProperties,
-								"Error-Descriptor":			errorDescription,
-								"UserError-Descriptor":		userErrors,
-								"GUI-Descriptor":			guiDescription
+								"Initialization-Class":		project.extension.resources.initClass,
+								"IOObject-Descriptor":		project.extension.resources.objectDefinition,
+								"Operator-Descriptor":		project.extension.resources.operatorDefinition,
+								"ParseRule-Descriptor":		project.extension.resources.parseRuleDefinition,
+								"Group-Descriptor":			project.extension.resources.groupProperties,
+								"Error-Descriptor":			project.extension.resources.errorDescription,
+								"UserError-Descriptor":		project.extension.resources.userErrors,
+								"GUI-Descriptor":			project.extension.resources.guiDescription
 								)
 					}
 				}

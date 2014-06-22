@@ -1,0 +1,3 @@
+## Introduction
+
+The rapidminer-extension plugin is designed to ...
