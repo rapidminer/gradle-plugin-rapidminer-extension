@@ -1,7 +1,7 @@
 package com.rapidminer.gradle;
 
 /**
- * 
+ *
  * @author Nils Woehler
  *
  */
@@ -12,15 +12,17 @@ public class ExtensionDefinition {
 	String admin = ""
 	String homepage = ""
 	String extensionDependencies = ""
-	
+
 	String rapidminerVersion = "6.0.003"
 	String rapidminerHome = "../rapidminer-studio"
 	String javaTarget = "1.7"
 	Boolean bundleDependencies = true
-	
+
+	String artifactId = null
+
 	// Resource files and init-class definitions
 	ResourceConfiguration resources = new ResourceConfiguration()
-	
+
 	/**
 	 * Delegates the provided Closure to the ResourceConfiguration.
 	 */

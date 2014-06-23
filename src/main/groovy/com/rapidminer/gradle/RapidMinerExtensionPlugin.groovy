@@ -2,11 +2,10 @@ package com.rapidminer.gradle
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.tasks.Copy
 
 
 /**
- * 
+ *
  * @author Nils Woehler
  *
  */
@@ -26,35 +25,23 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 	 */
 	void configureProject(Project project) {
 		project.configure(project) {
-			apply plugin: 'java'
-			apply plugin: 'eclipse'
-			apply plugin: 'base'
+
+			// extension project and subprojects are java projects
+			apply plugin: 'rapidminer-java-basics'
+			//			apply plugin: 'rapidminer-publish'
+			subprojects { apply plugin: 'rapidminer-java-basics' }
 
 			defaultTasks 'install'
 
-			// minimize changes, at least for now (gradle uses 'build' by default)
-			buildDir = "target"
-
-			// ###################
-			// Create Maven like provided configuration
-			// See http://issues.gradle.org/browse/GRADLE-784
-			configurations { provided }
-
-			sourceSets {
-				main.compileClasspath += configurations.provided
-				test.compileClasspath += configurations.provided
-				test.runtimeClasspath += configurations.provided
-			}
-
-			eclipse.classpath.plusConfigurations += configurations.provided
-			// ####################
+			// Create 'createExtensionBundle' task that will create an extension release jar
+			tasks.create(name: 'createExtensionRelease', type: org.gradle.api.tasks.bundling.Jar)
 
 			// Create 'install' task, will be configured later
 			// Copies extension jar created by 'jar' task to the '/lib/plugins' directory of RapidMiner
-			tasks.create(name:'install', type: Copy, dependsOn: jar)
+			tasks.create(name:'install', type: org.gradle.api.tasks.Copy, dependsOn: 'createExtensionRelease')
 
 			// Configuring the properties below can only be accomplished after
-			// 'extension' has been configured
+			// the project extension 'extension' has been configured
 			afterEvaluate {
 
 				// check if extension name has been defined
@@ -65,47 +52,73 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 					extension.namespace = extension.name.toLowerCase().replace(" ", "-");
 				}
 
-				// declare java version compatibility
-				sourceCompatibility = extension.javaTarget
-				targetCompatibility = extension.javaTarget
-
 				// define extension vendor as publishing group
 				group = extension.vendor
 
-				// add RapidMiner as dependency
-				dependencies { provided "com.rapidminer.studio:rapidminer:" + project.extension.rapidminerVersion }
-
-				// configure install task
-				install {
-					into extension.rapidminerHome + "/lib/plugins"
-					from jar
+				// add RapidMiner as dependency to all extension projects (parent+subprojects)
+				dependencies {
+					provided "com.rapidminer.studio:rapidminer:" + project.extension.rapidminerVersion
+				}
+				subprojects {
+					dependencies {
+						provided "com.rapidminer.studio:rapidminer:" + project.extension.rapidminerVersion
+					}
 				}
 
-				// extensions must specify init class and operator definition file
-				assert extension.resources.initClass
-				assert extension.resources.operatorDefinition
 
-				// configure jar output
-				jar {
-					// if activated add runtime dependencies to jar package
-					if(project.extension.bundleDependencies) {
-						dependsOn configurations.runtime
-						from ({configurations.runtime.collect {it.isDirectory() ? it : zipTree(it)}}) {
-							// remove all signature files
-							exclude "META-INF/*.SF"
-							exclude "META-INF/*.DSA"
-							exclude "META-INF/*.RSA"
-						}
+				//TODO if defined use artifactId, else use namespace
+				//				// define publish repositories and publications to upload extension as library
+				//				publish {
+				//					releaseRepo 'libs-release-local'
+				//					snapshotRepo 'libs-snapshot-local'
+				//					publication 'extensionLib'
+				//				}
+				//
+				//				// define Maven publication
+				//				publishing {
+				//					publications {
+				//						extensionLib(MavenPublication) {
+				//							from components.java
+				//
+				//							if(extension.artifactId){
+				//								artifactId extension.artifactId
+				//							}
+				//						}
+				//						extensionRelease(MavenPublication) {
+				//							from components.java
+				//
+				//							if(extension.artifactId){
+				//								artifactId extension.artifactId
+				//							}
+				//						}
+				//					}
+				//				}
+
+				// add check for manifest entries to avoid generic 'null' error
+				checkReleaseManifestEntries(project)
+
+				// configure create extension release task
+				createExtensionRelease {
+					appendix = "uberJar"
+
+					// bundle extension classes and compile dependencies
+					from sourceSets.main.output
+					from ({configurations.runtime.collect {it.isDirectory() ? it : zipTree(it)}}) {
+						// remove all signature files
+						exclude "META-INF/*.SF"
+						exclude "META-INF/*.DSA"
+						exclude "META-INF/*.RSA"
 					}
+					// configure manifest
 					manifest {
 						attributes(
 								"Manifest-Version": 		"1.0",
 								"Implementation-Vendor": 	project.extension.vendor,
 								"Implementation-Title":		project.extension.name,
 								"Implementation-URL":		project.extension.homepage,
-								"Implementation-Version": 	version,
+								"Implementation-Version": 	project.version,
 								"Specification-Title": 		project.extension.name,
-								"Specification-Version":	version,
+								"Specification-Version":	project.version,
 								"RapidMiner-Version":		project.extension.rapidminerVersion,
 								"RapidMiner-Type":			"RapidMiner_Extension",
 								"Plugin-Dependencies":		project.extension.extensionDependencies,
@@ -124,8 +137,40 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 								)
 					}
 				}
+
+				// configure install task
+				install {
+					into extension.rapidminerHome + "/lib/plugins"
+					from createExtensionRelease
+				}
 			}
 		}
+	}
+
+	/**
+	 * Checks
+	 * @param project
+	 * @return
+	 */
+	def checkReleaseManifestEntries(Project project) {
+		assert project.version
+		assert project.extension.name
+		assert project.extension.namespace
+		assert project.extension.vendor
+		assert project.extension.rapidminerVersion
+		assert project.extension.extensionDependencies
+
+		// extensions must specify init class and operator definition file
+		assert project.extension.resources.initClass
+		assert project.extension.resources.operatorDefinition
+		assert project.extension.resources.initClass
+		assert project.extension.resources.objectDefinition
+		assert project.extension.resources.operatorDefinition
+		assert project.extension.resources.parseRuleDefinition
+		assert project.extension.resources.groupProperties
+		assert project.extension.resources.errorDescription
+		assert project.extension.resources.userErrors
+		assert project.extension.resources.guiDescription
 	}
 
 }
