@@ -2,36 +2,32 @@ apply plugin: 'groovy'
 apply plugin: 'rapidminer-publish'
 
 buildscript {
-	// check for updates every build until gradle plugins have been released
-	configurations.all { resolutionStrategy.cacheChangingModulesFor 0, 'seconds' }
 	dependencies {
-		classpath group: 'com.rapidminer.gradle', name: 'rapidminer-publish', version:'1.0.000-SNAPSHOT', changing: true
+		classpath 'com.rapidminer.gradle:publish:0.1.1'
 	}
 }
 
 // define publish repositories and publications to upload
-publish {
+uploadConfig {
 	releaseRepo 'libs-release-local'
 	snapshotRepo 'libs-snapshot-local'
-	publication 'mavenJava'
+	contextUrl "${artifactory_contextUrl}"
+	publication 'gradlePlugin'
 }
 
 // define Maven publication
 publishing {
 	publications {
-		mavenJava(MavenPublication) {
+		gradlePlugin(MavenPublication) {
 			from components.java
-			artifactId "rapidminer-extension"
+			artifactId "extension"
 		}
 	}
 }
 
-// check for updates every build until 'rapidminer-java-basics' has been released
-configurations.all { resolutionStrategy.cacheChangingModulesFor 0, 'seconds' }
-
 dependencies {
 	compile gradleApi()
 	compile localGroovy()
-	compile group: 'com.rapidminer.gradle', name: 'rapidminer-java-basics', version:'1.0.000-SNAPSHOT', changing: true
-	compile group: 'com.rapidminer.gradle', name: 'rapidminer-publish', version:'1.0.000-SNAPSHOT', changing: true
+	compile 'com.rapidminer.gradle:java-basics:0.1.0'
+	compile 'com.rapidminer.gradle:publish:0.1.1'
 }
