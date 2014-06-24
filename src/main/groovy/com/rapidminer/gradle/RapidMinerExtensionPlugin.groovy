@@ -2,6 +2,7 @@ package com.rapidminer.gradle
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.file.FileTree
 
 
 /**
@@ -27,11 +28,10 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 		project.configure(project) {
 
 			// extension project and subprojects are java projects
-			apply plugin: 'rapidminer-publish'
+			//			apply plugin: 'rapidminer-publish'
 			allprojects { apply plugin: 'rapidminer-java-basics' }
 
 			defaultTasks 'install'
-
 
 			//FIXME add tasks groupd and description
 			// Create 'createExtensionBundle' task that will create an extension release jar
@@ -42,43 +42,44 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			tasks.create(name:'install', type: org.gradle.api.tasks.Copy, dependsOn: 'createExtensionRelease')
 
 			// define extension release and snapshot repositories
-			uploadConfig {
-				releaseRepo 'applications-release-local'
-				snapshotRepo 'applications-snapshot-local'
-				contextUrl 'https://gitlab.rapid-i.com/artifactory/'
-				publication 'extensionRelease'
-			}
+			//			uploadConfig {
+			//				releaseRepo 'applications-release-local'
+			//				snapshotRepo 'applications-snapshot-local'
+			//				contextUrl 'https://gitlab.rapid-i.com/artifactory/'
+			//				publication 'extensionRelease'
+			//			}
 
 			//			task sourceJar(type: Jar) { from sourceSets.main.allJava }
 
 			// define Maven publications
-			publishing {
-				publications {
-					//					extensionLib(MavenPublication) {
-					//						from components.java
-					//						artifactId extensionConfig.namespace
-					//					artifact sourceJar {
-					//						classifier "source"
-					//					  }
-					//					}
-					extensionRelease(MavenPublication) {
-						artifact createExtensionRelease
-						artifactId extensionConfig.namespace
-						groupId project.group + ".release"
-					}
-				}
-			}
+			//			publishing {
+			//				publications {
+			//					//					extensionLib(MavenPublication) {
+			//					//						from components.java
+			//					//						artifactId extensionConfig.namespace
+			//					//					artifact sourceJar {
+			//					//						classifier "source"
+			//					//					  }
+			//					//					}
+			//					extensionRelease(MavenPublication) { artifact createExtensionRelease //						artifactId extensionConfig.namespace
+			//						//						groupId project.group + ".release"
+			//					}
+			//				}
+			//			}
 
 			// Configuring the properties below can only be accomplished after
 			// the project extension 'extension' has been configured
 			afterEvaluate {
 
 				// check if extension name has been defined
+				logger.debug("Checking extension name")
 				assert project.extensionConfig.name
 
 				// create namespace from extension name if no namespace has been defined
+				logger.debug("Checking namespace")
 				if(!extensionConfig.namespace) {
 					extensionConfig.namespace = extensionConfig.name.toLowerCase().replace(" ", "-");
+					logger.info("Extension namespace not defined. Using: '"+extensionConfig.namespace+"'")
 				}
 
 				// define extension vendor as publishing group
@@ -148,28 +149,131 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 		}
 	}
 
+	private static final String DEFAULT_JAVA_PATH = "src/main/java/";
+	private static final String DEFAULT_RESOURCE_PATH = "src/main/resources/";
+	private static final String RAPIDMINER_PACKAGE = "com/rapidminer/";
+	private static final String RESOURCE_PACKAGE = RAPIDMINER_PACKAGE + "resources/"
+	private static final String I18N_PATH = "i18n/"
+
+	private static final String INIT_CLASS_PREFIX = "PluginInit"
+
+	private static final String JAVA_EXTENSION = ".java"
+	private static final String XML_EXTENSION = ".xml"
+	private static final String PROPERTIES_EXTENSION = ".properties"
+
 	/**
-	 * Checks
-	 * @param project
-	 * @return
+	 * Checks for existence of user defined resource objects. If no objects are defined by the user
+	 *
 	 */
 	def checkReleaseManifestEntries(Project project) {
 		assert project.version
-		assert project.extensionConfig.name
-		assert project.extensionConfig.namespace
 		assert project.extensionConfig.vendor
 
-		// extensions must specify init class and operator definition file
-		assert project.extensionConfig.resources.initClass
-		assert project.extensionConfig.resources.operatorDefinition
-		assert project.extensionConfig.resources.initClass
-		assert project.extensionConfig.resources.objectDefinition != null
-		assert project.extensionConfig.resources.operatorDefinition != null
-		assert project.extensionConfig.resources.parseRuleDefinition != null
-		assert project.extensionConfig.resources.groupProperties != null
-		assert project.extensionConfig.resources.errorDescription != null
-		assert project.extensionConfig.resources.userErrors != null
-		assert project.extensionConfig.resources.guiDescription != null
+		def res = project.extensionConfig.resources
+		def name = project.extensionConfig.name.replace(" ", "")
+		def logger = project.logger
+
+		res.initClass = checkInitClass(project, res, name, logger)
+		res.operatorDefinition = checkResourceFile("Operators", XML_EXTENSION, res.operatorDefinition, project, res, name, logger, true)
+		res.objectDefinition = checkResourceFile("ioobjects", XML_EXTENSION, res.objectDefinition, project, res, name, logger)
+		res.parseRuleDefinition = checkResourceFile("parserules", XML_EXTENSION, res.parseRuleDefinition, project, res, name, logger)
+		res.groupProperties = checkResourceFile("groups", PROPERTIES_EXTENSION, res.groupProperties, project, res, name, logger)
+		res.errorDescription = checkResourceFile("Errors", PROPERTIES_EXTENSION, res.errorDescription, project, res, name, logger, false, I18N_PATH)
+		res.userErrors = checkResourceFile("UserErrorMessage", PROPERTIES_EXTENSION, res.userErrors, project, res, name, logger, false,  I18N_PATH)
+		res.guiDescription = checkResourceFile("GUI", PROPERTIES_EXTENSION, res.guiDescription, project, res, name, logger,  false, I18N_PATH)
+	}
+
+	def checkInitClass(Project project, res, name, logger){
+		// Check if init class is user defined
+		if(!res.initClass){
+			def defaultFileName = DEFAULT_JAVA_PATH + RAPIDMINER_PACKAGE + INIT_CLASS_PREFIX + name + JAVA_EXTENSION
+			if(project.file(defaultFileName).exists()){
+				logger.info("Found default init class: '" + defaultFileName + "'")
+				return RAPIDMINER_PACKAGE.replace("/", ".") + INIT_CLASS_PREFIX + name
+			} else {
+				logger.info("Default init class  '" + defaultFileName + "' not found. "
+						+"Searching for alternatives in src/main/java...")
+
+				// Create a file tree with a base directory
+				FileTree tree = project.fileTree(dir: DEFAULT_JAVA_PATH, include: '**/*' + JAVA_EXTENSION)
+
+				// Iterate over the contents of a tree
+				def initCandidate = null
+				tree.find { File file ->
+					if(file.getName().contains(INIT_CLASS_PREFIX)){
+						logger.info("Found potential init class: " + file.getPath())
+						initCandidate = file.getPath()
+								.substring(file.getPath().indexOf(DEFAULT_JAVA_PATH) + DEFAULT_JAVA_PATH.length() + 1)
+								.replace(JAVA_EXTENSION, "")
+								.replace(File.separator, ".")
+						return true // take this one
+					}
+					return false // not found yet
+				}
+
+				// Still not found?
+				if(initCandidate == null){
+					throw new RuntimeException("No init class candidate found!")
+				}
+				logger.info("Selected init class: '"+ initCandidate+"'")
+				return initCandidate
+			}
+		} else {
+			// check if user defined init class exists
+			def initClassFile = project.file(DEFAULT_JAVA_PATH + res.initClass.replace(".", File.separator) + ".java")
+			if(!initClassFile.exists()){
+				throw new RuntimeException("Defined extension init class '"+ initClassFile +"' does not exist!")
+			}
+			return res.initClass // use the user-defined one
+		}
+	}
+
+
+	def checkResourceFile(String resourceName, String suffix, userDefinedResource, Project project, res, name, logger, boolean mandatory = false, String subdirectory = ""){
+		// Check if resource file is user defined
+		if(!userDefinedResource){
+			def defaultResourceFile = RESOURCE_PACKAGE + subdirectory + resourceName + name + suffix
+			if(project.file(DEFAULT_RESOURCE_PATH + defaultResourceFile).exists()){
+				logger.info("Found default " + resourceName + " resource file: '" + defaultResourceFile + "'")
+				return defaultResourceFile
+			} else {
+				logger.info("Default " + resourceName + " resource file '" + defaultResourceFile + "' not found."
+						+" Searching for alternatives in "+ DEFAULT_RESOURCE_PATH + "...")
+
+				// Create a file tree with a base directry
+				FileTree tree = project.fileTree(dir: DEFAULT_RESOURCE_PATH, include: '**/*' + suffix)
+
+				// Iterate over the contents of a tree
+				def resourceCandidate = null
+				tree.find { File file ->
+					if(file.getName().contains(resourceName)){
+						logger.info("Found potential " + resourceName + " resource file: " + file.getPath())
+						resourceCandidate = file.getPath().substring(file.getPath().indexOf(DEFAULT_RESOURCE_PATH) + DEFAULT_RESOURCE_PATH.length() + 1).replace(suffix, "")
+						return true // take this one
+					}
+					return false // not found yet
+				}
+
+				// Still not found?
+				if(resourceCandidate == null){
+					if(mandatory){
+						throw new RuntimeException("Mandatory " + resourceName + " resource file is missing. No candidate found!")
+					} else {
+						resourceCandidate = ""
+					}
+					logger.info("No optional " + resourceName + " resource file found. Skipping...")
+				} else {
+					logger.info("Selected " + resourceName + " resource file: '"+ resourceCandidate+"'")
+				}
+				return resourceCandidate
+			}
+		} else {
+			def fileName = DEFAULT_RESOURCE_PATH + userDefinedResource
+			def resourceFile = project.file(fileName)
+			if(!resourceFile.exists()){
+				throw new RuntimeException("Selected " + resourceName + " resource file '"+ resourceFile +"' does not exist!")
+			}
+		}
 	}
 
 	def getExtensionDependencies(Project project) {
