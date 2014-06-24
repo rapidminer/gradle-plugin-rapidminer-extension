@@ -8,8 +8,7 @@ package com.rapidminer.gradle;
  */
 public class ExtensionDependency {
 	
-	//FIXME remove .release
-	public static final String DEFAULT_GROUP = 'com.rapidminer.extension.release'
+	public static final String DEFAULT_GROUP = 'com.rapidminer.extension'
 	
 	String group = DEFAULT_GROUP
 	String namespace
