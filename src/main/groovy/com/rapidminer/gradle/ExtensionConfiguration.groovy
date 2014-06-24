@@ -6,12 +6,18 @@ package com.rapidminer.gradle;
  *
  */
 public class ExtensionConfiguration {
+
+	/**
+	 * The default extension groupId	
+	 */
+	public static final String DEFAULT_GROUP = 'com.rapidminer.extension'
+	
 	String name
 	String namespace
-	String admin
-
-		String vendor = "com.rapidminer.extension"
-	String homepage = ""
+	String groupdId = DEFAULT_GROUP
+	
+	String vendor = "RapidMiner GmbH"
+	String homepage = "www.rapidminer.com"
 
 	String rapidminerHome = "../rapidminer-studio"
 

@@ -75,14 +75,13 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 				if(!project.extensionConfig.name){
 					throw new RuntimeException("No RapidMiner Extension name defined. Define via 'extensionConfig { name $NAME }'.")
 				}
-
-				if(!project.extensionConfig.vendor){
-					throw new RuntimeException("No RapidMiner Extension vendor defined. Define via 'extensionConfig { vendor $VENDOR }'. Ddefault: 'com.rapidminer.extension'")
+				
+				if(!project.extensionConfig.groupdId) {
+					throw new RuntimeException("No groupdId defined! Define via 'extensionConfig { groupdId $GROUPID }'. (default: 'com.rapidminer.extension')")
 				}
-
-				if(!project.extensionConfig.admin){
-					throw new RuntimeException("No extension admin defined. Define via 'extensionConfig { admin $ADMIN }'.")
-				}
+				
+				// define extension group
+				group = extensionConfig.groupId
 
 				// create namespace from extension name if no namespace has been defined
 				logger.debug("Checking RapidMiner extension namespace")
@@ -91,8 +90,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 					logger.info("Namespace not defined. Using: '"+extensionConfig.namespace+"'")
 				}
 
-				// define extension vendor as publishing group
-				group = extensionConfig.vendor
+
 
 				// add RapidMiner and configured extensions as dependency to all projects
 				allprojects {

@@ -8,9 +8,7 @@ package com.rapidminer.gradle;
  */
 public class ExtensionDependency {
 	
-	public static final String DEFAULT_GROUP = 'com.rapidminer.extension'
-	
-	String group = DEFAULT_GROUP
+	String group = ExtensionConfiguration.DEFAULT_GROUP
 	String namespace
 	String version
 }
