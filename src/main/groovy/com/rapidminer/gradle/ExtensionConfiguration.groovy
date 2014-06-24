@@ -14,7 +14,7 @@ public class ExtensionConfiguration {
 	
 	String name
 	String namespace
-	String groupdId = DEFAULT_GROUP
+	String groupId = DEFAULT_GROUP
 	
 	String vendor = "RapidMiner GmbH"
 	String homepage = "www.rapidminer.com"

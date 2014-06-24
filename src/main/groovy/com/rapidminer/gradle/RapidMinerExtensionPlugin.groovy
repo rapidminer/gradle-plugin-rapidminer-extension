@@ -76,12 +76,12 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 					throw new RuntimeException("No RapidMiner Extension name defined. Define via 'extensionConfig { name $NAME }'.")
 				}
 				
-				if(!project.extensionConfig.groupdId) {
+				if(!project.extensionConfig.groupId) {
 					throw new RuntimeException("No groupdId defined! Define via 'extensionConfig { groupdId $GROUPID }'. (default: 'com.rapidminer.extension')")
 				}
 				
 				// define extension group
-				group = extensionConfig.groupId
+				group = project.extensionConfig.groupId
 
 				// create namespace from extension name if no namespace has been defined
 				logger.debug("Checking RapidMiner extension namespace")
