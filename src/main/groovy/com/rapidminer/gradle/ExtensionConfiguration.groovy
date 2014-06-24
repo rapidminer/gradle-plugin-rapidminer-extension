@@ -8,8 +8,9 @@ package com.rapidminer.gradle;
 public class ExtensionConfiguration {
 	String name
 	String namespace
-	String vendor = "com.rapidminer.extension"
-	String admin = ""
+	String admin
+
+		String vendor = "com.rapidminer.extension"
 	String homepage = ""
 
 	String rapidminerHome = "../rapidminer-studio"
