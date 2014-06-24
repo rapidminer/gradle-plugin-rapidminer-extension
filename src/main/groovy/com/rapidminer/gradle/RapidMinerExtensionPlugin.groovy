@@ -27,10 +27,11 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 		project.configure(project) {
 
 			// extension project and subprojects are java projects
-//			apply plugin: 'rapidminer-publish'
+			apply plugin: 'rapidminer-publish'
 			allprojects { apply plugin: 'rapidminer-java-basics' }
 
 			defaultTasks 'install'
+
 
 			//FIXME add tasks groupd and description
 			// Create 'createExtensionBundle' task that will create an extension release jar
@@ -39,6 +40,34 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			// Create 'install' task, will be configured later
 			// Copies extension jar created by 'jar' task to the '/lib/plugins' directory of RapidMiner
 			tasks.create(name:'install', type: org.gradle.api.tasks.Copy, dependsOn: 'createExtensionRelease')
+
+			// define extension release and snapshot repositories
+			uploadConfig {
+				releaseRepo 'applications-release-local'
+				snapshotRepo 'applications-snapshot-local'
+				contextUrl 'https://gitlab.rapid-i.com/artifactory/'
+				publication 'extensionRelease'
+			}
+
+			//			task sourceJar(type: Jar) { from sourceSets.main.allJava }
+
+			// define Maven publications
+			publishing {
+				publications {
+					//					extensionLib(MavenPublication) {
+					//						from components.java
+					//						artifactId extensionConfig.namespace
+					//					artifact sourceJar {
+					//						classifier "source"
+					//					  }
+					//					}
+					extensionRelease(MavenPublication) {
+						artifact createExtensionRelease
+						artifactId extensionConfig.namespace
+						groupId project.group + ".release"
+					}
+				}
+			}
 
 			// Configuring the properties below can only be accomplished after
 			// the project extension 'extension' has been configured
@@ -64,30 +93,6 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 						}
 					}
 				}
-
-
-				// define publish repositories and publications to upload extension as library
-//				uploadConfig {
-//					releaseRepo 'applications-release-local'
-//					snapshotRepo 'applications-snapshot-local'
-//					contextUrl 'https://gitlab.rapid-i.com/artifactory/'
-//					publication 'extensionRelease'
-//				}
-
-				// define Maven publications
-//				publishing {
-//					publications {
-//						extensionLib(MavenPublication) {
-//							from components.java
-//							artifactId extensionConfig.namespace
-//						}
-//						extensionRelease(MavenPublication) {
-//							from createExtensionRelease
-//							artifactId extensionConfig.namespace
-//							groupId project.group + ".release"
-//						}
-//					}
-//				}
 
 				// add check for manifest entries to avoid generic 'null' error
 				checkReleaseManifestEntries(project)
