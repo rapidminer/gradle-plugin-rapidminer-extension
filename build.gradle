@@ -28,6 +28,6 @@ publishing {
 dependencies {
 	compile gradleApi()
 	compile localGroovy()
-	compile 'com.rapidminer.gradle:java-basics:0.1.1'
+	compile 'com.rapidminer.gradle:java-basics:0.1.2'
 	compile 'com.rapidminer.gradle:publish:0.1.1'
 }
