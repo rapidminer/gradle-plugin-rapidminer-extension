@@ -8,3 +8,5 @@
 * extensionConfig.vendor is not mandatory anymore (default: RapidMiner GmbH)
 #### 0.2.0
 * Adds extension publishing tasks that allow to upload lib and release to artifactory
+#### 0.2.1
+* Fixes "null" namespaces when uploading artifacts with no namespace defined

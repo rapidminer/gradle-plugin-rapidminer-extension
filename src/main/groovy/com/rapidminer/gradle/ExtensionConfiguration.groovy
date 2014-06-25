@@ -8,14 +8,14 @@ package com.rapidminer.gradle;
 public class ExtensionConfiguration {
 
 	/**
-	 * The default extension groupId	
+	 * The default extension groupId
 	 */
 	public static final String DEFAULT_GROUP = 'com.rapidminer.extension'
-	
+
 	String name
 	String namespace
 	String groupId = DEFAULT_GROUP
-	
+
 	String vendor = "RapidMiner GmbH"
 	String homepage = "www.rapidminer.com"
 
@@ -39,5 +39,15 @@ public class ExtensionConfiguration {
 	 */
 	def dependencies(Closure closure){
 		dependencies.apply(closure)
+	}
+
+	/**
+	 * Overwrite namespace getter to ensure that there always is a non empty namespace
+	 */
+	def getNamespace(){
+		if(!namespace){
+			return name.toLowerCase().replace(" ", "-");
+		}
+		return namespace
 	}
 }
