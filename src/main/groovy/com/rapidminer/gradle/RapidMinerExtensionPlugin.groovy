@@ -3,6 +3,8 @@ package com.rapidminer.gradle
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.file.FileTree
+import org.gradle.api.publish.maven.MavenPublication
+
 
 
 /**
@@ -11,6 +13,8 @@ import org.gradle.api.file.FileTree
  *
  */
 class RapidMinerExtensionPlugin implements Plugin<Project> {
+
+	private static final String EXTENSION_GROUP = "RapidMiner Extension"
 
 	@Override
 	void apply(Project project) {
@@ -28,44 +32,85 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 		project.configure(project) {
 
 			// extension project and subprojects are java projects
-			//			apply plugin: 'rapidminer-publish'
+			apply plugin: 'rapidminer-publish'
 			allprojects { apply plugin: 'rapidminer-java-basics' }
 
 			defaultTasks 'install'
 
-			//FIXME add tasks groupd and description
 			// Create 'createExtensionBundle' task that will create an extension release jar
-			tasks.create(name: 'createExtensionRelease', type: org.gradle.api.tasks.bundling.Jar)
+			def createTask = tasks.create(name: 'createExtensionRelease', type: org.gradle.api.tasks.bundling.Jar)
+			createTask.group = EXTENSION_GROUP
+			createTask.description = "Creates an extension release .jar file."+
+					" The .jar will contain all specified compile and runtime dependencies."
 
 			// Create 'install' task, will be configured later
 			// Copies extension jar created by 'jar' task to the '/lib/plugins' directory of RapidMiner
-			tasks.create(name:'install', type: org.gradle.api.tasks.Copy, dependsOn: 'createExtensionRelease')
+			def installTask = tasks.create(name:'install', type: org.gradle.api.tasks.Copy, dependsOn: 'createExtensionRelease')
+			installTask.group = EXTENSION_GROUP
+			installTask.description = "Create a jar bundled with all dependencies and copies the jar"+
+					" to '%rapidminerHome/lib/plugins'. %rapidminerHome can be configured by changing"+
+					" 'extensionConfig { rapidminerHome '...' }'. Default is '../rapidminer-studio'."
+
+			// configure install task
+			install {
+				into "${->extensionConfig.rapidminerHome}/lib/plugins"
+				from createExtensionRelease
+			}
+
+			// create publish all task
+			def publishLibAndRelease = tasks.create(name: 'publishExtensionToArtifactory', dependsOn: [
+				'publishExtensionLibPublicationToMavenRepository',
+				'artifactoryPublish'
+			])
+			publishLibAndRelease.group = EXTENSION_GROUP
+			publishLibAndRelease.description = "Publishes extension lib .jar and extension release .jar to Artifactory."
+
+			// add lib appendix for extension without bundled dependencies
+			jar { appendix = "lib" }
+
+			// create sources jar task
+			//task sourceJar(type:  org.gradle.api.tasks.bundling.Jar) {  from sourceSets.main.allJava  }
+
+			// define extension group as lazy GString
+			// see http://forums.gradle.org/gradle/topics/how_do_you_delay_configuration_of_a_task_by_a_custom_plugin_using_the_extension_method
+			group = "${->project.extensionConfig.groupId}"
 
 			// define extension release and snapshot repositories
-			//			uploadConfig {
-			//				releaseRepo 'applications-release-local'
-			//				snapshotRepo 'applications-snapshot-local'
-			//				contextUrl 'https://gitlab.rapid-i.com/artifactory/'
-			//				publication 'extensionRelease'
-			//			}
-
-			//			task sourceJar(type: Jar) { from sourceSets.main.allJava }
+			uploadConfig {
+				releaseRepo 'applications-release-local'
+				snapshotRepo 'applications-snapshot-local'
+				contextUrl 'https://gitlab.rapid-i.com/artifactory/'
+				publication 'extensionRelease'
+			}
 
 			// define Maven publications
-			//			publishing {
-			//				publications {
-			//					//					extensionLib(MavenPublication) {
-			//					//						from components.java
-			//					//						artifactId extensionConfig.namespace
-			//					//					artifact sourceJar {
-			//					//						classifier "source"
-			//					//					  }
-			//					//					}
-			//					extensionRelease(MavenPublication) { artifact createExtensionRelease //						artifactId extensionConfig.namespace
-			//						//						groupId project.group + ".release"
-			//					}
-			//				}
-			//			}
+			publishing {
+				publications {
+					extensionLib(MavenPublication) {
+						from components.java
+						artifactId "${->project.extensionConfig.namespace}"
+						//artifact sourceJar { classifier "source" }
+					}
+					extensionRelease(MavenPublication) {
+						artifact createExtensionRelease
+						artifactId "${->project.extensionConfig.namespace}"
+						groupId "${->project.extensionConfig.groupId}.release"
+					}
+				}
+				repositories {
+					maven {
+						credentials {
+							username = "${artifactory_user}"
+							password = "${artifactory_password}"
+						}
+						if(project.version.endsWith('-SNAPSHOT')){
+							url "https://gitlab.rapid-i.com/artifactory/libs-snapshot-local"
+						} else {
+							url "https://gitlab.rapid-i.com/artifactory/libs-release-local"
+						}
+					}
+				}
+			}
 
 			// Configuring the properties below can only be accomplished after
 			// the project extension 'extension' has been configured
@@ -75,13 +120,10 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 				if(!project.extensionConfig.name){
 					throw new RuntimeException("No RapidMiner Extension name defined. Define via 'extensionConfig { name $NAME }'.")
 				}
-				
+
 				if(!project.extensionConfig.groupId) {
 					throw new RuntimeException("No groupdId defined! Define via 'extensionConfig { groupdId $GROUPID }'. (default: 'com.rapidminer.extension')")
 				}
-				
-				// define extension group
-				group = project.extensionConfig.groupId
 
 				// create namespace from extension name if no namespace has been defined
 				logger.debug("Checking RapidMiner extension namespace")
@@ -89,8 +131,6 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 					extensionConfig.namespace = extensionConfig.name.toLowerCase().replace(" ", "-");
 					logger.info("Namespace not defined. Using: '"+extensionConfig.namespace+"'")
 				}
-
-
 
 				// add RapidMiner and configured extensions as dependency to all projects
 				allprojects {
@@ -143,15 +183,6 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 								)
 					}
 				}
-
-				// configure install task
-				install {
-					into extensionConfig.rapidminerHome + "/lib/plugins"
-					from createExtensionRelease
-				}
-
-				// add lib appendix for extension without bundled dependencies
-				jar { appendix = "lib" }
 			}
 		}
 	}
@@ -167,6 +198,10 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 	private static final String JAVA_EXTENSION = ".java"
 	private static final String XML_EXTENSION = ".xml"
 	private static final String PROPERTIES_EXTENSION = ".properties"
+
+	def getArtifactId(Project project){
+		return project.extensionConfig.namespace
+	}
 
 	/**
 	 * Checks for existence of user defined resource objects. If no objects are defined by the user
