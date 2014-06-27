@@ -12,3 +12,5 @@
 * Fixes "null" namespaces when uploading artifacts with no namespace defined
 #### 0.2.2
 * Fixes error when guessing non default named resource files 
+#### 0.2.3
+* Fixes wrong multi-extension dependency declaration in MANIFEST.MF 

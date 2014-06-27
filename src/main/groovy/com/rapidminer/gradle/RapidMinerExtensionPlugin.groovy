@@ -15,6 +15,20 @@ import org.gradle.api.publish.maven.MavenPublication
 class RapidMinerExtensionPlugin implements Plugin<Project> {
 
 	private static final String EXTENSION_GROUP = "RapidMiner Extension"
+	
+	private static final String RMX = "rmx_"
+
+	private static final String DEFAULT_JAVA_PATH = "src/main/java/";
+	private static final String DEFAULT_RESOURCE_PATH = "src/main/resources/";
+	private static final String RAPIDMINER_PACKAGE = "com/rapidminer/";
+	private static final String RESOURCE_PACKAGE = RAPIDMINER_PACKAGE + "resources/"
+	private static final String I18N_PATH = "i18n/"
+
+	private static final String INIT_CLASS_PREFIX = "PluginInit"
+
+	private static final String JAVA_EXTENSION = ".java"
+	private static final String XML_EXTENSION = ".xml"
+	private static final String PROPERTIES_EXTENSION = ".properties"
 
 	@Override
 	void apply(Project project) {
@@ -163,7 +177,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 								"Plugin-Dependencies":		getExtensionDependencies(project),
 
 								// Definition of important files
-								"Extension-ID":				"rmx_" + project.extensionConfig.namespace,
+								"Extension-ID":				RMX + project.extensionConfig.namespace,
 								"Namespace":				project.extensionConfig.namespace,
 								"Initialization-Class":		project.extensionConfig.resources.initClass,
 								"IOObject-Descriptor":		project.extensionConfig.resources.objectDefinition,
@@ -179,18 +193,6 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			}
 		}
 	}
-
-	private static final String DEFAULT_JAVA_PATH = "src/main/java/";
-	private static final String DEFAULT_RESOURCE_PATH = "src/main/resources/";
-	private static final String RAPIDMINER_PACKAGE = "com/rapidminer/";
-	private static final String RESOURCE_PACKAGE = RAPIDMINER_PACKAGE + "resources/"
-	private static final String I18N_PATH = "i18n/"
-
-	private static final String INIT_CLASS_PREFIX = "PluginInit"
-
-	private static final String JAVA_EXTENSION = ".java"
-	private static final String XML_EXTENSION = ".xml"
-	private static final String PROPERTIES_EXTENSION = ".properties"
 
 	def getArtifactId(Project project){
 		return project.extensionConfig.namespace
@@ -288,7 +290,6 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 						resourceCandidate = file.getPath()
 							.substring(idx + DEFAULT_RESOURCE_PATH.length())
 							.replace(File.separator, "/")
-							.replace(suffix, "")
 						return true // take this one
 					}
 					return false // not found yet
@@ -318,12 +319,11 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 
 	def getExtensionDependencies(Project project) {
 		String deps = ""
-		project.extensionConfig.dependencies.extensions.each{  e ->
-			deps += ","+e.namespace+"_["+e.version+"]"
-		}
-		// remove first comma (if necessary)
-		if(deps.length() > 0) {
-			deps = deps.substring(1)
+		project.extensionConfig.dependencies.extensions.eachWithIndex{  e, i ->
+			if(i != 0){
+				deps += "; "
+			} 
+			deps += RMX + e.namespace + "[" + e.version + "]"
 		}
 		return deps
 	}
