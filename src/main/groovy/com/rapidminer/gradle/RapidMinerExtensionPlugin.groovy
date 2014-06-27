@@ -237,8 +237,9 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 				tree.find { File file ->
 					if(file.getName().contains(INIT_CLASS_PREFIX)){
 						logger.info("Found potential init class: " + file.getPath())
+						def idx = file.getPath().indexOf(DEFAULT_JAVA_PATH.replace("/", File.separator))
 						initCandidate = file.getPath()
-								.substring(file.getPath().indexOf(DEFAULT_JAVA_PATH) + DEFAULT_JAVA_PATH.length() + 1)
+								.substring(idx + DEFAULT_JAVA_PATH.length())
 								.replace(JAVA_EXTENSION, "")
 								.replace(File.separator, ".")
 						return true // take this one
@@ -283,7 +284,11 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 				tree.find { File file ->
 					if(file.getName().contains(resourceName)){
 						logger.info("Found potential " + resourceName + " resource file: " + file.getPath())
-						resourceCandidate = file.getPath().substring(file.getPath().indexOf(DEFAULT_RESOURCE_PATH) + DEFAULT_RESOURCE_PATH.length() + 1).replace(suffix, "")
+						def idx = file.getPath().indexOf(DEFAULT_RESOURCE_PATH.replace("/", File.separator))
+						resourceCandidate = file.getPath()
+							.substring(idx + DEFAULT_RESOURCE_PATH.length())
+							.replace(File.separator, "/")
+							.replace(suffix, "")
 						return true // take this one
 					}
 					return false // not found yet
