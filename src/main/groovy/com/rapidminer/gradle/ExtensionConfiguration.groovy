@@ -11,6 +11,8 @@ public class ExtensionConfiguration {
 	 * The default extension groupId
 	 */
 	public static final String DEFAULT_GROUP = 'com.rapidminer.extension'
+	
+	public static final String DEFAULT_WRAPPER_VERSION = '1.12'
 
 	String name
 	String namespace
@@ -20,6 +22,8 @@ public class ExtensionConfiguration {
 	String homepage = "www.rapidminer.com"
 
 	String rapidminerHome = "../rapidminer-studio"
+	
+	String wrapperVersion = DEFAULT_WRAPPER_VERSION
 
 	// RapidMiner and Extension dependencies
 	DependencyConfiguration dependencies = new DependencyConfiguration()

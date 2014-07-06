@@ -69,17 +69,14 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			}
 
 			// create publish all task
-			def publishLibAndRelease = tasks.create(name: 'publishExtension', dependsOn: [
-				'publishExtensionJarPublicationToMavenRepository',
-				'publishExtensionAllPublicationToMavenRepository'
-			])
+			def publishLibAndRelease = tasks.create(name: 'publishExtension', dependsOn: 'publishExtensionJarPublicationToMavenRepository')
 			publishLibAndRelease.group = EXTENSION_GROUP
 			publishLibAndRelease.description = "Publishes extension .jar and shaded extension .jar to configured Maven repository."
 
 			// add and configure Gradle wrapper task
 			tasks.create(name: 'wrapper', type: org.gradle.api.tasks.wrapper.Wrapper)
 			wrapper {
-				gradleVersion = '1.12'
+				gradleVersion = "${->extensionConfig.wrapperVersion}"
 			}
 			
 			// add lib appendix for extension without bundled dependencies
@@ -97,12 +94,13 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 				publications {
 					extensionJar(MavenPublication) {
 						from components.java
+						artifact shadowJar
 						artifactId "${->project.extensionConfig.namespace}"
 					}
-					extensionAll(MavenPublication) {
-						from components.shadow
-						artifactId "${->project.extensionConfig.namespace}-all"
-					}
+//					extensionAll(MavenPublication) {
+//						from components.shadow
+//						artifactId "${->project.extensionConfig.namespace}-all"
+//					}
 				}
 				repositories {
 					maven {
