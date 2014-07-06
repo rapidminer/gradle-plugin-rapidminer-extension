@@ -46,20 +46,17 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 		project.configure(project) {
 
 			// extension project and subprojects are java projects
-			apply plugin: 'rapidminer-publish'
 			allprojects { apply plugin: 'rapidminer-java-basics' }
+			apply plugin: 'maven-publish'
 
+			// shadowJar is being used to create a shaded extension jar
+			apply plugin: 'com.github.johnrengelman.shadow'
+			
 			defaultTasks 'install'
-
-			// Create 'createExtensionBundle' task that will create an extension release jar
-			def createTask = tasks.create(name: 'createExtensionRelease', type: org.gradle.api.tasks.bundling.Jar)
-			createTask.group = EXTENSION_GROUP
-			createTask.description = "Creates an extension release .jar file."+
-					" The .jar will contain all specified compile and runtime dependencies."
 
 			// Create 'install' task, will be configured later
 			// Copies extension jar created by 'jar' task to the '/lib/plugins' directory of RapidMiner
-			def installTask = tasks.create(name:'install', type: org.gradle.api.tasks.Copy, dependsOn: 'createExtensionRelease')
+			def installTask = tasks.create(name:'install', type: org.gradle.api.tasks.Copy, dependsOn: 'shadowJar')
 			installTask.group = EXTENSION_GROUP
 			installTask.description = "Create a jar bundled with all dependencies and copies the jar"+
 					" to '%rapidminerHome/lib/plugins'. %rapidminerHome can be configured by changing"+
@@ -68,17 +65,23 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			// configure install task
 			install {
 				into "${->extensionConfig.rapidminerHome}/lib/plugins"
-				from createExtensionRelease
+				from shadowJar
 			}
 
 			// create publish all task
-			def publishLibAndRelease = tasks.create(name: 'publishExtensionToArtifactory', dependsOn: [
-				'publishExtensionLibPublicationToMavenRepository',
-				'artifactoryPublish'
+			def publishLibAndRelease = tasks.create(name: 'publishExtension', dependsOn: [
+				'publishExtensionJarPublicationToMavenRepository',
+				'publishExtensionAllPublicationToMavenRepository'
 			])
 			publishLibAndRelease.group = EXTENSION_GROUP
-			publishLibAndRelease.description = "Publishes extension lib .jar and extension release .jar to Artifactory."
+			publishLibAndRelease.description = "Publishes extension .jar and shaded extension .jar to configured Maven repository."
 
+			// add and configure Gradle wrapper task
+			tasks.create(name: 'wrapper', type: org.gradle.api.tasks.wrapper.Wrapper)
+			wrapper {
+				gradleVersion = '1.12'
+			}
+			
 			// add lib appendix for extension without bundled dependencies
 			jar { appendix = "lib" }
 
@@ -89,26 +92,16 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			// see http://forums.gradle.org/gradle/topics/how_do_you_delay_configuration_of_a_task_by_a_custom_plugin_using_the_extension_method
 			group = "${->project.extensionConfig.groupId}"
 
-			// define extension release and snapshot repositories
-			uploadConfig {
-				releaseRepo 'applications-release-local'
-				snapshotRepo 'applications-snapshot-local'
-				contextUrl 'https://gitlab.rapid-i.com/artifactory/'
-				publication 'extensionRelease'
-			}
-
 			// define Maven publications
 			publishing {
 				publications {
-					extensionLib(MavenPublication) {
+					extensionJar(MavenPublication) {
 						from components.java
 						artifactId "${->project.extensionConfig.namespace}"
-						//artifact sourceJar { classifier "source" }
 					}
-					extensionRelease(MavenPublication) {
-						artifact createExtensionRelease
-						artifactId "${->project.extensionConfig.namespace}"
-						groupId "${->project.extensionConfig.groupId}.release"
+					extensionAll(MavenPublication) {
+						from components.shadow
+						artifactId "${->project.extensionConfig.namespace}-all"
 					}
 				}
 				repositories {
@@ -153,15 +146,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 				checkReleaseManifestEntries(project)
 
 				// configure create extension release task
-				createExtensionRelease {
-					// bundle extension classes and compile dependencies
-					from sourceSets.main.output
-					from ({configurations.runtime.collect {it.isDirectory() ? it : zipTree(it)}}) {
-						// remove all signature files
-						exclude "META-INF/*.SF"
-						exclude "META-INF/*.DSA"
-						exclude "META-INF/*.RSA"
-					}
+				jar {
 					// configure manifest
 					manifest {
 						attributes(

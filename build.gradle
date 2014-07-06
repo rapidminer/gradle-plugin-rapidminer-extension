@@ -29,5 +29,8 @@ dependencies {
 	compile gradleApi()
 	compile localGroovy()
 	compile 'com.rapidminer.gradle:java-basics:0.1.2'
-	compile 'com.rapidminer.gradle:publish:0.1.1'
+	
+	// Add shadowJar Gradle plugin which is used to create a shaded extension jar 
+	// that contains all it's dependencies (https://github.com/johnrengelman/shadow)
+	compile 'com.github.jengelman.gradle.plugins:shadow:1.0.1'
 }

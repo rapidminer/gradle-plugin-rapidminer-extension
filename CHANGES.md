@@ -14,3 +14,7 @@
 * Fixes error when guessing non default named resource files 
 #### 0.2.3
 * Fixes wrong multi-extension dependency declaration in MANIFEST.MF 
+#### 0.2.4
+* Adds default Gradle Wrapper task called 'wrapper'
+* Use 'shadowJar' Gradle plugin for building extension releases (much faster than doing it the old way)
+* Removes dependency from Artifactory Gradle plugin, only use native 'maven-publish' plugin instead
