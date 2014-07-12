@@ -19,4 +19,7 @@
 * Use 'shadowJar' Gradle plugin for building extension releases (much faster than doing it the old way)
 * Removes dependency from Artifactory Gradle plugin, only use native 'maven-publish' plugin instead
 #### 0.2.6
-* Updates java-basics to latest version to fix Gradle 2.0 compile errors
+* Updates 'rapidminer-java-basics' to latest version to fix Gradle 2.0 compile errors
+#### 0.2.7
+* Updates 'rapidminer-java-basics' to version 0.2.0 which adds Maven publishing
+* Updates 'shadowJar' plugin to version 1.0.2 to fix Gradle 2.0 compile errors
