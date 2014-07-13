@@ -23,3 +23,7 @@
 #### 0.2.7
 * Updates 'rapidminer-java-basics' to version 0.2.0 which adds Maven publishing
 * Updates 'shadowJar' plugin to version 1.0.2 to fix Gradle 2.0 compile errors
+#### 0.3.0
+* Rename 'install' task to 'instsallExtension'
+* Apply 'rapidminer-code-quality' plugin to all projects
+* Updates 'rapidminer-java-basics' to version 0.2.1 which fixes the provided configuration

@@ -46,24 +46,26 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 		project.configure(project) {
 
 			// extension project and subprojects are java projects
-			allprojects { apply plugin: 'rapidminer-java-basics' }
-			apply plugin: 'maven-publish'
+			allprojects { 
+				apply plugin: 'rapidminer-java-basics' 
+				apply plugin: 'rapidminer-code-quality'
+			}
 
 			// shadowJar is being used to create a shaded extension jar
 			apply plugin: 'com.github.johnrengelman.shadow'
 			
-			defaultTasks 'install'
+			defaultTasks 'installExtension'
 
 			// Create 'install' task, will be configured later
 			// Copies extension jar created by 'jar' task to the '/lib/plugins' directory of RapidMiner
-			def installTask = tasks.create(name:'install', type: org.gradle.api.tasks.Copy, dependsOn: 'shadowJar')
+			def installTask = tasks.create(name:'installExtension', type: org.gradle.api.tasks.Copy, dependsOn: 'shadowJar')
 			installTask.group = EXTENSION_GROUP
 			installTask.description = "Create a jar bundled with all dependencies and copies the jar"+
 					" to '%rapidminerHome/lib/plugins'. %rapidminerHome can be configured by changing"+
 					" 'extensionConfig { rapidminerHome '...' }'. Default is '../rapidminer-studio'."
 
 			// configure install task
-			install {
+			installExtension {
 				into "${->extensionConfig.rapidminerHome}/lib/plugins"
 				from shadowJar
 			}
@@ -82,9 +84,6 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			// add lib appendix for extension without bundled dependencies
 			jar { appendix = "lib" }
 
-			// create sources jar task
-			//task sourceJar(type:  org.gradle.api.tasks.bundling.Jar) {  from sourceSets.main.allJava  }
-
 			// define extension group as lazy GString
 			// see http://forums.gradle.org/gradle/topics/how_do_you_delay_configuration_of_a_task_by_a_custom_plugin_using_the_extension_method
 			group = "${->project.extensionConfig.groupId}"
@@ -94,25 +93,10 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 				publications {
 					extensionJar(MavenPublication) {
 						from components.java
-						artifact shadowJar
+						artifact shadowJar {
+							classifier 'all'
+						}
 						artifactId "${->project.extensionConfig.namespace}"
-					}
-//					extensionAll(MavenPublication) {
-//						from components.shadow
-//						artifactId "${->project.extensionConfig.namespace}-all"
-//					}
-				}
-				repositories {
-					maven {
-						credentials {
-							username = "${artifactory_user}"
-							password = "${artifactory_password}"
-						}
-						if(project.version.endsWith('-SNAPSHOT')){
-							url "https://gitlab.rapid-i.com/artifactory/libs-snapshot-local"
-						} else {
-							url "https://gitlab.rapid-i.com/artifactory/libs-release-local"
-						}
 					}
 				}
 			}
