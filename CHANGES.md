@@ -29,3 +29,5 @@
 * Updates 'rapidminer-java-basics' to version 0.2.1 which fixes the provided configuration
 #### 0.3.1
 * Updates 'rapidminer-code-quality' to version 0.1.1 which adds prependHeader tasks
+#### 0.4.0
+* Applies new plugin: 'rapidminer-release' with version 0.1.2

@@ -53,6 +53,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 
 			// shadowJar is being used to create a shaded extension jar
 			apply plugin: 'com.github.johnrengelman.shadow'
+			apply plugin: 'rapidminer-release'
 			
 			defaultTasks 'installExtension'
 
