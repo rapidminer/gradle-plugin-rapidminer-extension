@@ -1,36 +1,16 @@
-apply plugin: 'groovy'
-apply plugin: 'rapidminer-publish'
-
 buildscript {
 	dependencies {
-		classpath 'com.rapidminer.gradle:publish:0.1.1'
+		classpath 'com.rapidminer.gradle:gradle-plugin:0.1.2'
 	}
 }
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+apply plugin: 'rapidminer-gradle-plugin'
 
-// define publish repositories and publications to upload
-uploadConfig {
-	releaseRepo 'libs-release-local'
-	snapshotRepo 'libs-snapshot-local'
-	contextUrl "${artifactory_contextUrl}"
-	publication 'gradlePlugin'
-}
-
-// define Maven publication
-publishing {
-	publications {
-		gradlePlugin(MavenPublication) {
-			from components.java
-			artifactId "extension"
-		}
-	}
+gradlePlugin {
+	id 'extension'
 }
 
 dependencies {
-	compile gradleApi()
-	compile localGroovy()
 	compile 'com.rapidminer.gradle:java-basics:0.2.1'
 	compile 'com.rapidminer.gradle:code-quality:0.1.1'
 	
