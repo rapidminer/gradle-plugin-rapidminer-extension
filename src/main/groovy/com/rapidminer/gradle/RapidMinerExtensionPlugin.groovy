@@ -15,7 +15,7 @@ import org.gradle.api.publish.maven.MavenPublication
 class RapidMinerExtensionPlugin implements Plugin<Project> {
 
 	private static final String EXTENSION_GROUP = "RapidMiner Extension"
-	
+
 	private static final String RMX = "rmx_"
 
 	private static final String DEFAULT_JAVA_PATH = "src/main/java/";
@@ -46,15 +46,15 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 		project.configure(project) {
 
 			// extension project and subprojects are java projects
-			allprojects { 
-				apply plugin: 'rapidminer-java-basics' 
+			allprojects {
+				apply plugin: 'rapidminer-java-basics'
 				apply plugin: 'rapidminer-code-quality'
 			}
 
 			// shadowJar is being used to create a shaded extension jar
 			apply plugin: 'com.github.johnrengelman.shadow'
 			apply plugin: 'rapidminer-release'
-			
+
 			defaultTasks 'installExtension'
 
 			// Create 'install' task, will be configured later
@@ -78,10 +78,8 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 
 			// add and configure Gradle wrapper task
 			tasks.create(name: 'wrapper', type: org.gradle.api.tasks.wrapper.Wrapper)
-			wrapper {
-				gradleVersion = "${->extensionConfig.wrapperVersion}"
-			}
-			
+			wrapper { gradleVersion = "${->extensionConfig.wrapperVersion}" }
+
 			// add lib appendix for extension without bundled dependencies
 			jar { appendix = "lib" }
 
@@ -94,9 +92,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 				publications {
 					extensionJar(MavenPublication) {
 						from components.java
-						artifact shadowJar {
-							classifier 'all'
-						}
+						artifact shadowJar { classifier 'all' }
 						artifactId "${->project.extensionConfig.namespace}"
 					}
 				}
@@ -106,6 +102,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			// the project extension 'extension' has been configured
 			afterEvaluate {
 
+				//TODO do these sanity checks only when jar is created (as import of project without an extension name does not work)
 				// first sanity checks
 				if(!project.extensionConfig.name){
 					throw new RuntimeException("No RapidMiner Extension name defined. Define via 'extensionConfig { name $NAME }'.")
@@ -125,6 +122,8 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 					}
 				}
 
+				// TODO create tasks that checks entries instead of doing it in the evaluation phase
+				// TODO jar should depend on this new task
 				// add check for manifest entries to avoid generic 'null' error
 				checkReleaseManifestEntries(project)
 
@@ -256,8 +255,8 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 						logger.info("Found potential " + resourceName + " resource file: " + file.getPath())
 						def idx = file.getPath().indexOf(DEFAULT_RESOURCE_PATH.replace("/", File.separator))
 						resourceCandidate = file.getPath()
-							.substring(idx + DEFAULT_RESOURCE_PATH.length())
-							.replace(File.separator, "/")
+								.substring(idx + DEFAULT_RESOURCE_PATH.length())
+								.replace(File.separator, "/")
 						return true // take this one
 					}
 					return false // not found yet
@@ -290,7 +289,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 		project.extensionConfig.dependencies.extensions.eachWithIndex{  e, i ->
 			if(i != 0){
 				deps += "; "
-			} 
+			}
 			deps += RMX + e.namespace + "[" + e.version + "]"
 		}
 		return deps
