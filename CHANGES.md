@@ -1,7 +1,8 @@
 ## Change Log
 
 #### 0.4.0
-* Applies new plugin: 'rapidminer-release' with version 0.1.2
+* Applies 'rapidminer-release' with version 0.1.3
+* Updates 'rapidminer-code-quality' to version 0.2.0
 
 #### 0.3.1
 * Updates 'rapidminer-code-quality' to version 0.1.1 which adds prependHeader tasks
