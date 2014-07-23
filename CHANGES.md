@@ -2,6 +2,7 @@
 
 #### 0.4.1
 * Updates 'rapidminer-code-quality' to version 0.2.1
+* Fixes dependencies from provided scope being compiled into 'all' jar
 
 #### 0.4.0
 * Applies 'rapidminer-release' with version 0.1.3

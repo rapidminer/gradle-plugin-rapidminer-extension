@@ -11,7 +11,7 @@ gradlePlugin {
 }
 
 dependencies {
-	compile 'com.rapidminer.gradle:java-basics:0.2.1'
+	compile 'com.rapidminer.gradle:java-basics:0.2.2'
 	compile 'com.rapidminer.gradle:code-quality:0.2.1'
 	compile 'com.rapidminer.gradle:release:0.1.5'
 	

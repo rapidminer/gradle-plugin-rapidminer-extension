@@ -70,7 +70,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 				into "${->extensionConfig.rapidminerHome}/lib/plugins"
 				from shadowJar
 			}
-
+			
 			// create publish all task
 			def publishLibAndRelease = tasks.create(name: 'publishExtension', dependsOn: 'publishExtensionJarPublicationToMavenRepository')
 			publishLibAndRelease.group = EXTENSION_GROUP
@@ -155,6 +155,13 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 								"UserError-Descriptor":		project.extensionConfig.resources.userErrors,
 								"GUI-Descriptor":			project.extensionConfig.resources.guiDescription
 								)
+					}
+				}
+				
+				// ensure provided dependencies are not compiled into shadowJar
+				shadowJar {
+					dependencies {
+						exclude(dependency(configurations.provided))
 					}
 				}
 			}
