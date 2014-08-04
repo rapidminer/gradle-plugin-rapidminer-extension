@@ -62,13 +62,13 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 
 			// extension project and subprojects are java projects
 			allprojects {
-				apply plugin: 'rapidminer-java-basics'
-				apply plugin: 'rapidminer-code-quality'
+				apply plugin: 'com.rapidminer.gradle.java-basics'
+				apply plugin: 'com.rapidminer.gradle.code-quality'
 			}
 
 			// shadowJar is being used to create a shaded extension jar
 			apply plugin: 'com.github.johnrengelman.shadow'
-			apply plugin: 'rapidminer-release'
+			apply plugin: 'com.rapidminer.gradle.release'
 
 			defaultTasks 'installExtension'
 
