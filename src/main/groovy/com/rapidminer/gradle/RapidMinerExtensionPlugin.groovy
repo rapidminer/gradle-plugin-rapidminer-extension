@@ -85,7 +85,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 				into "${->extensionConfig.rapidminerHome}/lib/plugins"
 				from shadowJar
 			}
-			
+
 			// create publish all task
 			def publishLibAndRelease = tasks.create(name: 'publishExtension', dependsOn: 'publishExtensionJarPublicationToMavenRepository')
 			publishLibAndRelease.group = EXTENSION_GROUP
@@ -94,9 +94,6 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			// add and configure Gradle wrapper task
 			tasks.create(name: 'wrapper', type: org.gradle.api.tasks.wrapper.Wrapper)
 			wrapper { gradleVersion = "${->extensionConfig.wrapperVersion}" }
-
-			// add lib appendix for extension without bundled dependencies
-			jar { appendix = "lib" }
 
 			// define extension group as lazy GString
 			// see http://forums.gradle.org/gradle/topics/how_do_you_delay_configuration_of_a_task_by_a_custom_plugin_using_the_extension_method
@@ -172,7 +169,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 								)
 					}
 				}
-				
+
 				// ensure provided dependencies are not compiled into shadowJar
 				shadowJar {
 					dependencies {

@@ -1,5 +1,8 @@
 ## Change Log
 
+#### 0.4.2
+* Removes lib appendix for jar created by jar task
+
 #### 0.4.1
 * Updates 'rapidminer-code-quality' to version 0.2.1
 * Fixes dependencies from provided scope being compiled into 'all' jar
