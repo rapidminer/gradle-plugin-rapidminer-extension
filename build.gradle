@@ -11,11 +11,11 @@ gradlePlugin {
 }
 
 dependencies {
-	compile 'com.rapidminer.gradle:java-basics:0.2.2'
-	compile 'com.rapidminer.gradle:code-quality:0.2.1'
-	compile 'com.rapidminer.gradle:release:0.1.5'
+	compile 'com.rapidminer.gradle:java-basics:0.2.4-SNAPSHOT'
+	compile 'com.rapidminer.gradle:code-quality:0.2.3-SNAPSHOT'
+	compile 'com.rapidminer.gradle:release:0.2.0-SNAPSHOT'
 	
 	// Add shadowJar Gradle plugin which is used to create a shaded extension jar 
 	// that contains all it's dependencies (https://github.com/johnrengelman/shadow)
-	compile 'com.github.jengelman.gradle.plugins:shadow:1.0.2'
+	compile 'com.github.jengelman.gradle.plugins:shadow:1.0.3'
 }
