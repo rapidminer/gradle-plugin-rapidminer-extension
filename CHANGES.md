@@ -1,6 +1,6 @@
 ## Change Log
 
-#### 0.4.2
+#### 0.5.0
 * Removes lib appendix for jar created by jar task
 
 #### 0.4.1

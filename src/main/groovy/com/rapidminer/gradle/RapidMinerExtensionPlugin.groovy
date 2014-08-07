@@ -156,16 +156,18 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 								"Plugin-Dependencies":		getExtensionDependencies(project),
 
 								// Definition of important files
-								"Extension-ID":				RMX + project.extensionConfig.namespace,
-								"Namespace":				project.extensionConfig.namespace,
-								"Initialization-Class":		project.extensionConfig.resources.initClass,
-								"IOObject-Descriptor":		project.extensionConfig.resources.objectDefinition,
-								"Operator-Descriptor":		project.extensionConfig.resources.operatorDefinition,
-								"ParseRule-Descriptor":		project.extensionConfig.resources.parseRuleDefinition,
-								"Group-Descriptor":			project.extensionConfig.resources.groupProperties,
-								"Error-Descriptor":			project.extensionConfig.resources.errorDescription,
-								"UserError-Descriptor":		project.extensionConfig.resources.userErrors,
-								"GUI-Descriptor":			project.extensionConfig.resources.guiDescription
+								"Extension-ID":					RMX + project.extensionConfig.namespace,
+								"Namespace":					project.extensionConfig.namespace,
+								"Initialization-Class":			project.extensionConfig.resources.initClass,
+								"IOObject-Descriptor":			project.extensionConfig.resources.objectDefinition,
+								"Operator-Descriptor":			project.extensionConfig.resources.operatorDefinition,
+								"ParseRule-Descriptor":			project.extensionConfig.resources.parseRuleDefinition,
+								"Group-Descriptor":				project.extensionConfig.resources.groupProperties,
+								"Error-Descriptor":				project.extensionConfig.resources.errorDescription,
+								"UserError-Descriptor":			project.extensionConfig.resources.userErrors,
+								"GUI-Descriptor":				project.extensionConfig.resources.guiDescription,
+								"Settings-Descriptor":			project.extensionConfig.resources.settingsDescriptor,
+								"SettingsStructure-Descriptor":	project.extensionConfig.resources.settingsStructureDescriptor
 								)
 					}
 				}
@@ -204,6 +206,8 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 		res.errorDescription = checkResourceFile("Errors", PROPERTIES_EXTENSION, res.errorDescription, project, res, name, logger, false, I18N_PATH)
 		res.userErrors = checkResourceFile("UserErrorMessage", PROPERTIES_EXTENSION, res.userErrors, project, res, name, logger, false,  I18N_PATH)
 		res.guiDescription = checkResourceFile("GUI", PROPERTIES_EXTENSION, res.guiDescription, project, res, name, logger,  false, I18N_PATH)
+		res.settingsStructureDescriptor = checkResourceFile("settings", XML_EXTENSION, res.settingsStructureDescriptor, project, res, name, logger,  false)
+		res.settingsDescriptor = checkResourceFile("Settings", PROPERTIES_EXTENSION, res.settingsDescriptor, project, res, name, logger,  false, I18N_PATH)
 	}
 
 	def checkInitClass(Project project, res, name, logger){

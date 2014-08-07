@@ -30,6 +30,8 @@ public class ResourceConfiguration {
 	String errorDescription = ""
 	String userErrors = ""
 	String guiDescription = ""
+	String settingsDescriptor = ""
+	String settingsStructureDescriptor = ""
 
 	/**
 	 * Applies the provided closure (e.g. to configure class fields).
@@ -72,4 +74,13 @@ public class ResourceConfiguration {
 	def guiDescription(String guiDescription) {
 		this.guiDescription = guiDescription
 	}
+	
+	def settingsDescriptor(String settingsDescriptor){
+		this.settingsDescriptor = settingsDescriptor
+	}
+	
+	def settingsStructureDescriptor(String settingsStructureDescriptor){
+		this.settingsStructureDescriptor = settingsStructureDescriptor
+	}
+	
 }
