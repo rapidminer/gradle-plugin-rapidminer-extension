@@ -25,6 +25,7 @@ public class DependencyConfiguration {
 	
 	List<ExtensionDependency> extensions = []
 	String rapidminer = '6.0.000'
+	Boolean useAntArtifact = false
 	
 	/**
 	 * Applies the provided closure (e.g. to configure class fields).
@@ -36,6 +37,10 @@ public class DependencyConfiguration {
 	
 	def rapidminer(String version) {
 		this.rapidminer = version
+	}
+	
+	def useAntArtifact(Boolean use) {
+		this.useAntArtifact = use
 	}
 	
 	def extension(extensionDef) {

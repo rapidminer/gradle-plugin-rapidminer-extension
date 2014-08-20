@@ -1,7 +1,12 @@
 ## Change Log
 
 #### 0.5.0
+* RapidMiner Studio dependency will by default point to new Maven artifact. Use extensionConfig { dependencies { useAntArtifact = true } } to use old Ant artifact dependency (which is available up to version 6.0.008).
 * Removes lib appendix for jar created by jar task
+* Updates 'rapidminer-code-quality' to version 0.2.3
+* Updates 'rapidminer-release' to version 0.2.0
+* Updates 'rapidminer-java-basics' to version 0.2.6
+* Adds Settings-Descriptor and SettingsStructure-Descriptor Jar properties
 
 #### 0.4.1
 * Updates 'rapidminer-code-quality' to version 0.2.1
