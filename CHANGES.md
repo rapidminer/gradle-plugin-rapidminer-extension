@@ -1,5 +1,8 @@
 ## Change Log
 
+#### 0.5.1
+* Adds Gradle 2.1 compatible plugin name 'com.rapidminer.gradle.extension'
+
 #### 0.5.0
 * RapidMiner Studio dependency will by default point to new Maven artifact. Use extensionConfig { dependencies { useAntArtifact = true } } to use old Ant artifact dependency (which is available up to version 6.0.008).
 * Removes lib appendix for jar created by jar task
