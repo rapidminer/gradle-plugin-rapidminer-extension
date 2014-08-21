@@ -51,12 +51,21 @@ The plugin...
 		 * other RapidMiner extension dependencies. 
 		 */
 		dependencies {
+			
 			/*
 			 * Defines the minimum version of RapidMiner the extension needs to be loaded. 
 			 * This version will be added to the compile classpath as provided dependency. 
 			 * Default is '6.0.000'.
 			 */
 			rapidminer "5.3.000"
+			
+			/*
+			 * Defines whether the old Ant artifact (com.rapidminer.studio:rapidmimer) should be
+			 * used of if the new Maven artifact (com.rapidminer.studio:rapidmimer-studio-core),
+			 * which is available since version 6.0.9, should be used. 
+			 * By default it is set to 'false'.
+			 */
+			useAntArtifact true
 			
 			/*
 			 * Syntax to add dependencies to other RapidMiner extensions.
@@ -70,61 +79,76 @@ The plugin...
 		 * If not defined the resource files will be guessed by a heuristics.
 		 */
 		resource {
+			
 			/*
 			 * Optional parameter that allows to specify the class used for initialization. 
 			 * If not specified the plugin checks if a class named 'PluginInit%EXTENSION_NAME%' exists
 			 * where %EXTENSION_NAME% is the extension name without whitespaces (e.g. 'Web Mining' -> 'PluginInitWebMining').
 			 */
-			initClass = "com.rapidminer.PluginInitWeb"
+			initClass "com.rapidminer.PluginInitWebMining"
 			
 			/*
 			 * Optional parameter that allows to specify the operator definition XML file. 
 			 * If not specified the plugin checks if a resource file named 'Operators%EXTENSION_NAME%.xml' exists
 			 * where %EXTENSION_NAME% is the extension name without whitespaces (e.g. 'Web Mining' -> 'OperatorsWebMining.xml').
 			 */
-			operatorDefinition = "/com/rapidminer/resources/OperatorsWeb.xml"
+			operatorDefinition "/com/rapidminer/resources/OperatorsWebMining.xml"
 			
 			/*
 			 * Optional parameter that allows to specify the IO Object definition XML file. 
 			 * If not specified the plugin checks if a resource file named 'ioobjects%EXTENSION_NAME%.xml' exists
 			 * where %EXTENSION_NAME% is the extension name without whitespaces (e.g. 'Web Mining' -> 'ioobjectsWebMining.xml').
 			 */
-			objectDefinition = "/com/rapidminer/resources/ioobjectsWeb.xml"
+			objectDefinition "/com/rapidminer/resources/ioobjectsWebMining.xml"
 			
 			/*
 			 * Optional parameter that allows to specify the parse rule definition XML file. 
 			 * If not specified the plugin checks if a resource file named 'parserules%EXTENSION_NAME%.xml' exists
 			 * where %EXTENSION_NAME% is the extension name without whitespaces (e.g. 'Web Mining' -> 'parserulesWebMining.xml').
 			 */
-			parseRuleDefinition = "/com/rapidminer/resources/parserulesWeb.xml"
+			parseRuleDefinition "/com/rapidminer/resources/parserulesWebMining.xml"
 			
 			/*
 			 * Optional parameter that allows to specify the groups properties file. 
 			 * If not specified the plugin checks if a resource file named 'groups%EXTENSION_NAME%.properties' exists
 			 * where %EXTENSION_NAME% is the extension name without whitespaces (e.g. 'Web Mining' -> 'groupsWebMining.properties').
 			 */
-			groupProperties = "/com/rapidminer/resources/groupsWeb.properties"
+			groupProperties "/com/rapidminer/resources/groupsWebMining.properties"
 			
 			/*
 			 * Optional parameter that allows to specify the errors properties file. 
 			 * If not specified the plugin checks if a resource file named 'Errors%EXTENSION_NAME%.properties' exists
 			 * where %EXTENSION_NAME% is the extension name without whitespaces (e.g. 'Web Mining' -> 'ErrorsWebMining.properties').
 			 */
-			errorDescription = "/com/rapidminer/resources/i18n/ErrorsWeb.properties"
+			errorDescription "/com/rapidminer/resources/i18n/ErrorsWebMining.properties"
 			
 			/*
 			 * Optional parameter that allows to specify the user errors properties file. 
 			 * If not specified the plugin checks if a resource file named 'UserErrorMessages%EXTENSION_NAME%.properties' exists
 			 * where %EXTENSION_NAME% is the extension name without whitespaces (e.g. 'Web Mining' -> 'UserErrorMessagesWebMining.properties').
 			 */
-			userErrors = "/com/rapidminer/resources/i18n/UserErrorMessagesWeb.properties"
+			userErrors "/com/rapidminer/resources/i18n/UserErrorMessagesWebMining.properties"
 			
 			/*
 			 * Optional parameter that allows to specify the GUI properties file. 
 			 * If not specified the plugin checks if a resource file named 'GUI%EXTENSION_NAME%.properties' exists
 			 * where %EXTENSION_NAME% is the extension name without whitespaces (e.g. 'Web Mining' -> 'GUIWebMining.properties').
 			 */
-			guiDescription = "/com/rapidminer/resources/i18n/GUIWeb.properties"
+			guiDescription "/com/rapidminer/resources/i18n/GUIWebMining.properties"
+			
+			/*
+			 * Optional parameter that allows to specify the settings configuration XML file. 
+			 * If not specified the plugin checks if a resource file named 'settings%EXTENSION_NAME%.xml' exists
+			 * where %EXTENSION_NAME% is the extension name without whitespaces (e.g. 'Web Mining' -> 'settingsWebMining.xml').
+			 */
+			settingsDescriptor "/com/rapidminer/resouces/settingsWebMining.xml"
+			
+			/*
+			 * Optional parameter that allows to specify the settings properties file. 
+			 * If not specified the plugin checks if a resource file named 'Settings%EXTENSION_NAME%.properties' exists
+			 * where %EXTENSION_NAME% is the extension name without whitespaces (e.g. 'Web Mining' -> 'SettingsWebMining.properties').
+			 */
+			settingsStructureDescriptor "/com/rapidminer/resources/i18n/SettingsWebMining.properties"
 		}
 	}
 
@@ -144,5 +168,5 @@ This task depends on the _shadow_ task, which creates a Jar containing the exten
 This task depends on the publication tasks of the extensionJar Maven publication.
 It publishes the extension .jar and the shaded extension .jar to the configured Maven repository.
 
-#####wrapper
+##### wrapper
 This tasks downloads and installes the Gradle wrapper with the specified Gradle version.
