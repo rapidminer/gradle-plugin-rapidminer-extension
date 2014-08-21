@@ -8,6 +8,14 @@ The plugin...
 * ... ensures that the created extension jars MANIFEST.MF contains valid and correct entries
 
 ## How to use
+	buildscript {
+		dependencies {
+			classpath 'com.rapidminer.gradle:extension:$VERSION'
+		}
+	}
+
+	apply plugin: 'com.rapidminer.gradle.extension'
+	
 	extensionConfig {
 		/*
 		 * Mandatory parameter that defines the extension name.
