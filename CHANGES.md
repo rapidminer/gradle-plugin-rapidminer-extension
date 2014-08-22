@@ -1,5 +1,9 @@
 ## Change Log
 
+#### 0.5.2
+* Fixes error for extensions with a multi-project build setups
+* Plugins applied by the extension plugin will only be applied to the project which applies the extension plugin  
+
 #### 0.5.1
 * Adds Gradle 2.1 compatible plugin name 'com.rapidminer.gradle.extension'
 
