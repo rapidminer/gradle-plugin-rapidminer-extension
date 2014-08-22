@@ -19,6 +19,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.file.FileTree
 import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.api.plugins.JavaPlugin
 
 
 
@@ -60,14 +61,26 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 	void configureProject(Project project) {
 		project.configure(project) {
 
-			// extension project and subprojects are java projects
-			allprojects {
-				apply plugin: 'com.rapidminer.gradle.java-basics'
-				apply plugin: 'com.rapidminer.gradle.code-quality'
+			// Apply Maven and Java to be able to configure the extensionJar
+			// publication before any other plugin accesses the publishing extension
+			apply plugin: 'maven-publish'
+			apply plugin: 'java'
+			apply plugin: 'com.github.johnrengelman.shadow'
+			
+			// define Maven publications
+			publishing {
+				publications {
+					extensionJar(MavenPublication) {
+						from components.java
+						artifact shadowJar { classifier 'all' }
+						artifactId "${->project.extensionConfig.namespace}"
+					}
+				}
 			}
 
 			// shadowJar is being used to create a shaded extension jar
-			apply plugin: 'com.github.johnrengelman.shadow'
+			apply plugin: 'com.rapidminer.gradle.java-basics'
+			apply plugin: 'com.rapidminer.gradle.code-quality'
 			apply plugin: 'com.rapidminer.gradle.release'
 
 			defaultTasks 'installExtension'
@@ -99,17 +112,6 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			// see http://forums.gradle.org/gradle/topics/how_do_you_delay_configuration_of_a_task_by_a_custom_plugin_using_the_extension_method
 			group = "${->project.extensionConfig.groupId}"
 
-			// define Maven publications
-			publishing {
-				publications {
-					extensionJar(MavenPublication) {
-						from components.java
-						artifact shadowJar { classifier 'all' }
-						artifactId "${->project.extensionConfig.namespace}"
-					}
-				}
-			}
-
 			// Configuring the properties below can only be accomplished after
 			// the project extension 'extension' has been configured
 			afterEvaluate {
@@ -125,11 +127,13 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 				}
 
 				// add RapidMiner and configured extensions as dependency to all projects
-				allprojects {
-					dependencies {
-						provided getRapidMinerDependency(project)
-						extensionConfig.dependencies.extensions.each{  e ->
-							provided group: e.group, name: e.namespace, version: e.version
+				allprojects { Project p ->
+					if(p.plugins.hasPlugin(JavaPlugin)) {
+						dependencies {
+							provided getRapidMinerDependency(project)
+							extensionConfig.dependencies.extensions.each{  e ->
+								provided group: e.group, name: e.namespace, version: e.version
+							}
 						}
 					}
 				}
