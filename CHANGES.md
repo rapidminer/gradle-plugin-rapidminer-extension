@@ -1,5 +1,8 @@
 ## Change Log
 
+#### 0.5.3
+* Adds Artifactory repository publication configuration 
+
 #### 0.5.2
 * Fixes error for extensions with a multi-project build setups
 * Plugins applied by the extension plugin will only be applied to the project which applies the extension plugin  
