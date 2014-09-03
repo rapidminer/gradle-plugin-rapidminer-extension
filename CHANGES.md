@@ -2,6 +2,7 @@
 
 #### 0.5.3
 * Adds Artifactory repository publication configuration 
+* Changes namespace whitespace separator from '-' to '_'
 
 #### 0.5.2
 * Fixes error for extensions with a multi-project build setups

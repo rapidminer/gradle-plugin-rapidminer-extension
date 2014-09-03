@@ -25,7 +25,7 @@ The plugin...
 		/*
 		 * Optional parameter that defines the extension namespace. The namespace is also used as artifactId.
 		 * If not defined the namespace will be infered from the extension name by replacing whitespace characters 
-		 * by a dash and converting the name to lower case (e.g. 'Web Mining' becomes 'web-mining'). 
+		 * by an underscore and converting the name to lower case (e.g. 'Web Mining' becomes 'web_mining'). 
 		 */
 		namespace = 'web'
 		
