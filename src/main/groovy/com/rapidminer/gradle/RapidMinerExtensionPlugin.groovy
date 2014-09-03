@@ -67,6 +67,15 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			apply plugin: 'java'
 			apply plugin: 'com.github.johnrengelman.shadow'
 			
+			ext {
+				// Publishing variables
+				SNAPSHOT = '-SNAPSHOT'
+				BASE_URL = 'https://gitlab.rapid-i.com/artifactory/'
+				SNAPSHOT_REPO = 'libs-snapshot-local'
+				RELEASE_REPO = 'libs-release-local'
+				REPO = version.endsWith(SNAPSHOT) ?  SNAPSHOT_REPO : RELEASE_REPO
+			}
+			
 			// define Maven publications
 			publishing {
 				publications {
@@ -74,6 +83,15 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 						from components.java
 						artifact shadowJar { classifier 'all' }
 						artifactId "${->project.extensionConfig.namespace}"
+					}
+				}
+				repositories {
+					maven {
+						url BASE_URL + REPO
+						credentials {
+							username = "$artifactory_user"
+							password = "$artifactory_password"
+						}
 					}
 				}
 			}
