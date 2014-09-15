@@ -1,5 +1,8 @@
 ## Change Log
 
+#### 0.5.4
+* Changes default wrapper Gradle version to 2.0
+
 #### 0.5.3
 * Adds Artifactory repository publication configuration 
 * Changes namespace whitespace separator from '-' to '_'
