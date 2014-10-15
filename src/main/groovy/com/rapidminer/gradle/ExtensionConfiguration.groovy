@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.rapidminer.gradle;
+package com.rapidminer.gradle
 
 /**
  *
@@ -27,7 +27,7 @@ public class ExtensionConfiguration {
 	 */
 	public static final String DEFAULT_GROUP = 'com.rapidminer.extension'
 	
-	public static final String DEFAULT_WRAPPER_VERSION = '2.0'
+	public static final String DEFAULT_WRAPPER_VERSION = '2.1'
 
 	String name
 	String namespace
@@ -65,7 +65,7 @@ public class ExtensionConfiguration {
 	 */
 	def getNamespace(){
 		if(!namespace){
-			return name.toLowerCase().replace(" ", "_");
+			return name.toLowerCase().replace(" ", "_")
 		}
 		return namespace
 	}

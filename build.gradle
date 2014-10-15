@@ -1,6 +1,6 @@
 buildscript {
 	dependencies {
-		classpath 'com.rapidminer.gradle:gradle-plugin:0.2.5'
+		classpath 'com.rapidminer.gradle:gradle-plugin:0.2.+'
 	}
 }
 
@@ -11,7 +11,7 @@ gradlePlugin {
 }
 
 dependencies {
-	compile 'com.rapidminer.gradle:java-basics:0.2.6'
+	compile 'com.rapidminer.gradle:java-basics:0.3.0'
 	compile 'com.rapidminer.gradle:code-quality:0.2.3'
 	compile 'com.rapidminer.gradle:release:0.2.0'
 	

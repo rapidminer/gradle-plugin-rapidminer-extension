@@ -1,7 +1,9 @@
 ## Change Log
 
 #### 0.5.4
-* Changes default wrapper Gradle version to 2.0
+* Changes default wrapper Gradle version to 2.1
+* Updates java-basics plugin to version 3.0.0 (which removes superfluous publish targets)
+* Updates shadow plugin to version 1.0.3
 
 #### 0.5.3
 * Adds Artifactory repository publication configuration 
