@@ -65,7 +65,11 @@ public class ExtensionConfiguration {
 	 */
 	def getNamespace(){
 		if(!namespace){
-			return name.toLowerCase().replace(" ", "_")
+			if(name){
+				return name.toLowerCase().replace(" ", "_")
+			} else {
+				return ''
+			}
 		}
 		return namespace
 	}

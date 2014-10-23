@@ -1,5 +1,10 @@
 ## Change Log
 
+#### 0.6.0
+* Updates code-quality plugin to version 0.3.4
+* Manifest content will only be checked when creating a Jar, not when building the Gradle model
+* Removes 'publishExtension' as Jar publication was removed in version 0.5.4
+
 #### 0.5.4
 * Changes default wrapper Gradle version to 2.1
 * Updates java-basics plugin to version 3.0.0 (which removes superfluous publish targets)

@@ -12,7 +12,7 @@ gradlePlugin {
 
 dependencies {
 	compile 'com.rapidminer.gradle:java-basics:0.3.0'
-	compile 'com.rapidminer.gradle:code-quality:0.2.3'
+	compile 'com.rapidminer.gradle:code-quality:0.3.4'
 	compile 'com.rapidminer.gradle:release:0.2.0'
 	
 	// Add shadowJar Gradle plugin which is used to create a shaded extension jar 
