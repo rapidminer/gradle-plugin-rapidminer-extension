@@ -18,6 +18,7 @@ package com.rapidminer.gradle
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.file.FileTree
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.plugins.JavaPlugin
@@ -106,6 +107,10 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			} catch(e) {
 				project.logger.error "Could not apply release plugin", e
 			}
+
+			// Let compile extend from provided. 
+			// This ensures that newer versions of compile dependencies do overwrite older versions from provided configuration.
+			configurations { compile.extendsFrom provided }
 
 			defaultTasks 'installExtension'
 
@@ -201,13 +206,31 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 				}
 
 				// ensure provided dependencies are not compiled into shadowJar
-				shadowJar {
-					dependencies {
-						exclude(dependency(configurations.provided))
+				def firstLevelProvided = project.configurations.provided.getResolvedConfiguration().getFirstLevelModuleDependencies()
+				def artifactsToExclude = getResolvedArtifacts(firstLevelProvided)
+
+				artifactsToExclude.each { artifact ->
+					project.logger.info "Excluding ${artifact} from being bundled into the shadow jar."
+					shadowJar {
+						dependencies {
+							exclude(dependency(artifact))
+						}
 					}
 				}
 			}
 		}
+	}
+
+	def getResolvedArtifacts(Set<ResolvedArtifact> artifacts) {
+		Set<String> resolvedArtifacts = [] as Set
+		artifacts.each {
+			// add current artifact
+			resolvedArtifacts << "${it.moduleGroup}:${it.moduleName}:${it.moduleVersion}"
+
+			// recursion to add children
+			resolvedArtifacts += getResolvedArtifacts(it.children)
+		}
+		return resolvedArtifacts
 	}
 
 	def getArtifactId(Project project){

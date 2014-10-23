@@ -1,9 +1,11 @@
 ## Change Log
 
 #### 0.6.0
+* (BREAKING CHANGE) Compile configuration will now extend from provided configuration. This ensures that newer artifact versions of compile configuration do overwrite older versions from provided configuration.
+* Updates shadow plugin to version 1.1.2
 * Updates code-quality plugin to version 0.3.4
-* Manifest content will only be checked when creating a Jar, not when building the Gradle model
-* Removes 'publishExtension' as Jar publication was removed in version 0.5.4
+* Manifest content will only be checked when creating a Jar, not every time when building the Gradle model
+* Removes 'publishExtension' task as Jar publication was removed in version 0.5.4 (use Extension publication tasks from now on)
 
 #### 0.5.4
 * Changes default wrapper Gradle version to 2.1
