@@ -4,7 +4,7 @@ buildscript {
 	}
 }
 
-apply plugin: 'rapidminer-gradle-plugin'
+apply plugin: 'com.rapidminer.gradle.gradle-plugin'
 
 gradlePlugin {
 	id 'extension'
