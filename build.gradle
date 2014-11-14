@@ -1,19 +1,15 @@
-buildscript {
-	dependencies {
-		classpath 'com.rapidminer.gradle:gradle-plugin:0.2.+'
-	}
+plugins {
+	id 'com.rapidminer.gradle-plugin' version '0.2.9'
 }
-
-apply plugin: 'com.rapidminer.gradle.gradle-plugin'
 
 gradlePlugin {
 	id 'extension'
 }
 
 dependencies {
-	compile 'com.rapidminer.gradle:java-basics:0.3.0'
-	compile 'com.rapidminer.gradle:code-quality:0.3.4'
-	compile 'com.rapidminer.gradle:release:0.2.0'
+	compile 'com.rapidminer.gradle:java-basics:0.3.+'
+	compile 'com.rapidminer.gradle:code-quality:0.3.+'
+	compile 'com.rapidminer.gradle:release:0.2.+'
 	
 	// Add shadowJar Gradle plugin which is used to create a shaded extension jar 
 	// that contains all it's dependencies (https://github.com/johnrengelman/shadow)

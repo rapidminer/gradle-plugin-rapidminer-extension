@@ -1,5 +1,8 @@
 ## Change Log
 
+#### 0.6.1
+* Adds shortened plugin name 'com.rapidminer.extension' to comply with plugins.gradle.org standards
+
 #### 0.6.0
 * (BREAKING CHANGE) Compile configuration will now extend from provided configuration. This ensures that newer artifact versions of compile configuration do overwrite older versions from provided configuration.
 * Updates shadow plugin to version 1.1.2

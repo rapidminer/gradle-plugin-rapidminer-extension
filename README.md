@@ -1,20 +1,16 @@
 ## Introduction
 
-The 'rapidminer-extension' plugin is designed to ease the process of creating a RapidMiner extension.
+The 'com.rapidminer.extension' plugin is designed to ease the process of creating a RapidMiner extension.
 The plugin...
 * ... applies and configures the RapidMiner Gradle plugins rapidminer-java-basics, rapidminer-code-quality, and rapidminer-release as well as a plugin for creating a shaded/shadow Jar (link).
 * ... adds the extensionJar Maven publication which contains the pure extension jar as well as the shaded/shadow jar.
 * ... adds RapidMiner and configured RapidMiner extensions as provided dependencies 
 * ... ensures that the created extension jars MANIFEST.MF contains valid and correct entries
 
-## How to use
-	buildscript {
-		dependencies {
-			classpath 'com.rapidminer.gradle:extension:$VERSION'
-		}
+## How to use (requires Gradle 2.1+)
+	plugins {
+		id 'com.rapidminer.extension' version «plugin version»
 	}
-
-	apply plugin: 'com.rapidminer.gradle.extension'
 	
 	extensionConfig {
 		/*
