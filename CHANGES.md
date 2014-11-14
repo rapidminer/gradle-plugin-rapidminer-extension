@@ -1,6 +1,7 @@
 ## Change Log
 
 #### 0.6.3
+* Change shadow plugin to latest version (1.2.0) which is compatible with Gradle 2.2
 
 #### 0.6.2
 * Downgrade shadow plugin to version 1.0.3 (breaks build with Gradle 2.2)
