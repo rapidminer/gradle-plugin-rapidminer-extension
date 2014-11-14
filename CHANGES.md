@@ -1,5 +1,7 @@
 ## Change Log
 
+#### 0.6.3
+
 #### 0.6.2
 * Downgrade shadow plugin to version 1.0.3 (breaks build with Gradle 2.2)
 * Do not configure remote Maven repository if credentials and URL aren't set
