@@ -13,5 +13,5 @@ dependencies {
 	
 	// Add shadowJar Gradle plugin which is used to create a shaded extension jar 
 	// that contains all it's dependencies (https://github.com/johnrengelman/shadow)
-	compile 'com.github.jengelman.gradle.plugins:shadow:1.1.2'
+	compile 'com.github.jengelman.gradle.plugins:shadow:1.0.3'
 }

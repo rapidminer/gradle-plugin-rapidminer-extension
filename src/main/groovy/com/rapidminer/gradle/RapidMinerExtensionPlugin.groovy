@@ -72,7 +72,6 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			ext {
 				// Publishing variables
 				SNAPSHOT = '-SNAPSHOT'
-				BASE_URL = 'https://gitlab.rapid-i.com/artifactory/'
 				SNAPSHOT_REPO = 'libs-snapshot-local'
 				RELEASE_REPO = 'libs-release-local'
 				REPO = version.endsWith(SNAPSHOT) ?  SNAPSHOT_REPO : RELEASE_REPO
@@ -87,12 +86,17 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 						artifactId "${->project.extensionConfig.namespace}"
 					}
 				}
-				repositories {
-					maven {
-						url BASE_URL + REPO
-						credentials {
-							username = "$artifactory_user"
-							password = "$artifactory_password"
+				// Only set remote Maven repository if user, password, and contextURL are set
+				if(project.hasProperty('artifactory_user') && 
+					project.hasProperty('artifactory_password') && 
+					project.hasProperty('artifactory_contextUrl')) {
+					repositories {
+						maven {
+							url "${artifactory_contextUrl}" + REPO
+							credentials {
+								username = "$artifactory_user"
+								password = "$artifactory_password"
+							}
 						}
 					}
 				}
