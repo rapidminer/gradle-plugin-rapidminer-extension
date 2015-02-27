@@ -181,6 +181,12 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 						provided group: e.group, name: e.namespace, version: e.version
 					}
 				}
+				
+				// Check if test environment should be configured
+				if(extensionConfig.configureProcessTestEnv && !extensionConfig.dependencies.useAntArtifact){
+					configureProcessTestEnvironment(project)
+				}
+				
 
 				// add check for manifest entries to avoid generic 'null' error
 				assignReleaseManifestEntries(project)
@@ -232,6 +238,109 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 				}
 			}
 		}
+	}
+	
+	def configureProcessTestEnvironment(Project project){
+		
+		def rmTestHome = project.file("${project.buildDir}/tmp/rapidminerHome/").absolutePath
+		def testProperties = [:]
+		testProperties['rapidminer.test.repository.local'] = 'true'
+		testProperties['rapidminer.test.repository.location'] = '//junit/'
+		testProperties['rapidminer.test.repository.dbURL'] = 'http://192.168.1.2:8080/'
+		testProperties['rapidminer.test.repository.local'] = 'true'
+		testProperties['rapidminer.test.repository.user'] = 'junit'
+		testProperties['rapidminer.test.repository.password'] = 'junit2'
+		testProperties['rapidminer.test.repository.exclude'] = '.*NOTEST.*'
+		testProperties['rapidminer.test.repository.url'] =  project.file('test-processes/').absolutePath
+		testProperties['rapidminer.home'] = rmTestHome
+		
+		// Add prepareRapidMiner Home in any case
+		project.configure(project) {
+			
+			configurations {
+				testsFromJar
+				testCompile.extendsFrom testsFromJar
+				testExtension {
+					description 'Extensions that will be installed into RapidMiner home for process testing'
+					transitive = false
+				}
+			}
+			
+			dependencies {
+				testsFromJar group: 'com.rapidminer.studio', name: 'rapidminer-studio-integration-tests', version: '+', classifier: 'test'
+				testCompile group: 'com.rapidminer.studio', name: 'rapidminer-studio-core', version: '+', classifier: 'test'
+				project.extensionConfig.dependencies.extensions.each{  e ->
+					if(project.logger.infoEnabled) {
+						project.logger.info "Adding RapidMiner Extension as test dependency (${e})"
+					}
+					testExtension group: e.group, name: e.namespace, version: '+', classifier: 'all'
+				}
+			}
+			
+			def prepareRMHomeTask = tasks.create(name: 'prepareRapidMinerHome', type: org.gradle.api.tasks.Sync)
+			prepareRMHomeTask.group = 'test'
+			prepareRMHomeTask.description = "Prepares a RapidMiner Home location for extension process testing."
+			prepareRapidMinerHome {
+				into "${rmTestHome}/lib/plugins"
+				from shadowJar
+				from configurations.testExtension
+			}
+			
+			test {
+				dependsOn prepareRapidMinerHome
+				
+				// set system properties, as they are null by default
+				systemProperties = System.properties
+				
+				// Define default extension test properties
+				testProperties.each { k, v ->
+					systemProperty k, v
+				}
+				
+				testLogging.showStandardStreams = true
+			}
+		}
+		
+		if(project.extensionConfig.runProcessTests){
+			project.configure(project){
+				configurations {
+					junitAnt
+				}
+				
+				dependencies {
+					junitAnt 'org.apache.ant:ant-junit:1.9.3'
+				}
+				
+				ant.taskdef(name: 'antJunit', classname: 'org.apache.tools.ant.taskdefs.optional.junit.JUnitTask', classpath: configurations.junitAnt.asPath)
+				def runProcessTestTask = tasks.create('runProcessTests')
+				runProcessTests {
+					doLast {
+						def testResultDir = project.file("${buildDir}/test-results/")
+						if(!testResultDir.exists()) {
+							testResultDir.mkdirs()
+						}
+						configurations.testsFromJar.each {
+							file ->
+							ant.antJunit(printsummary:'on', fork:'true', showoutput:'yes', haltonfailure:'false') { //configure junit task as per your need
+								formatter (type: 'xml')
+								batchtest(todir: testResultDir, skipNonTests:'true' ) {
+									zipfileset(src: file, includes:"**/TestRepositorySuite.class")
+								}
+								classpath {
+									fileset(file: file)
+									pathelement(path: sourceSets.main.compileClasspath.asPath + sourceSets.test.compileClasspath.asPath)
+								}
+								testProperties.each { k, v ->
+									sysproperty(key: k ,value: v)
+								}
+							}
+						}
+					}
+				}
+				test.dependsOn runProcessTests
+			}
+		}
+		
 	}
 
 	def getResolvedArtifacts(Set<ResolvedArtifact> artifacts) {
