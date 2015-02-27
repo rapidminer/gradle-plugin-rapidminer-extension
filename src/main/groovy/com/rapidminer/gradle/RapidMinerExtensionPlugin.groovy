@@ -266,6 +266,8 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 				}
 			}
 			
+			// Add dependencies for running process tests. 
+			// Always use the latest version of core and extension dependencies to ensure compability with most recent versions.
 			dependencies {
 				testsFromJar group: 'com.rapidminer.studio', name: 'rapidminer-studio-integration-tests', version: '+', classifier: 'test'
 				testCompile group: 'com.rapidminer.studio', name: 'rapidminer-studio-core', version: '+', classifier: 'test'
