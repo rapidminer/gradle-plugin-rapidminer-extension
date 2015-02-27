@@ -27,11 +27,14 @@ public class ExtensionConfiguration {
 	 */
 	public static final String DEFAULT_GROUP = 'com.rapidminer.extension'
 	
-	public static final String DEFAULT_WRAPPER_VERSION = '2.1'
+	public static final String DEFAULT_WRAPPER_VERSION = '2.3'
 
 	String name
 	String namespace
 	String groupId = DEFAULT_GROUP
+	
+	boolean configureProcessTestEnv = true
+	boolean runProcessTests = true
 
 	String vendor = "RapidMiner GmbH"
 	String homepage = "www.rapidminer.com"
