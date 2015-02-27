@@ -67,6 +67,8 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			// publication before any other plugin accesses the publishing extension
 			apply plugin: 'maven-publish'
 			apply plugin: 'java'
+
+			// shadowJar is being used to create a shaded extension jar
 			apply plugin: 'com.github.johnrengelman.shadow'
 
 			ext {
@@ -101,21 +103,23 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 					}
 				}
 			}
-
-			// shadowJar is being used to create a shaded extension jar
-			apply plugin: 'com.rapidminer.gradle.java-basics'
-			apply plugin: 'com.rapidminer.gradle.code-quality'
+			
+			// Add Java basics and code style plugins
+			apply plugin: 'com.rapidminer.java-basics'
+			apply plugin: 'com.rapidminer.code-quality'
 
 			try {
 				apply plugin: 'com.rapidminer.gradle.release'
 			} catch(e) {
-				project.logger.error "Could not apply release plugin", e
+				project.logger.error "Could not apply release plugin. Probably the extension is not saved in a Git repository."
 			}
 
 			// Let compile extend from provided. 
 			// This ensures that newer versions of compile dependencies do overwrite older versions from provided configuration.
-			configurations { compile.extendsFrom provided }
-
+			configurations { 
+				compile.extendsFrom project.configurations.provided
+			}
+			
 			defaultTasks 'installExtension'
 
 			// Create 'install' task, will be configured later
@@ -133,7 +137,8 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			}
 
 			// add and configure Gradle wrapper task
-			tasks.create(name: 'wrapper', type: org.gradle.api.tasks.wrapper.Wrapper)
+			def wrapperTask = tasks.create(name: 'wrapper', type: org.gradle.api.tasks.wrapper.Wrapper)
+			wrapperTask.description = "Adds/Updates the Gradle warpper."
 			wrapper { gradleVersion = "${->extensionConfig.wrapperVersion}" }
 
 			// define extension group as lazy GString
@@ -158,18 +163,22 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			}
 			jar.dependsOn checkManifestEntries
 			shadowJar.dependsOn checkManifestEntries
-
+			
 			// Configuring the properties below can only be accomplished after
 			// the project extension 'extension' has been configured
 			afterEvaluate {
 
-				// add RapidMiner and configured extensions as dependency to all projects
-				allprojects { Project p ->
-					dependencies {
-						provided getRapidMinerDependency(project)
-						extensionConfig.dependencies.extensions.each{  e ->
-							provided group: e.group, name: e.namespace, version: e.version
+				def rmDep = getRapidMinerDependency(project)
+				project.logger.info "Adding RapidMiner Core dependency  (${rmDep})"
+				
+				// add RapidMiner and configured extensions as dependencies
+				dependencies {
+					provided rmDep
+					extensionConfig.dependencies.extensions.each{  e ->
+						if(project.logger.infoEnabled) {
+							project.logger.info "Adding RapidMiner Extension dependency (${e})"
 						}
+						provided group: e.group, name: e.namespace, version: e.version
 					}
 				}
 
