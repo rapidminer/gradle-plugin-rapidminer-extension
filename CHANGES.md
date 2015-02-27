@@ -1,10 +1,14 @@
 ## Change Log
 
-#### 0.6.3
-* Change shadow plugin to latest version (1.2.0) which is compatible with Gradle 2.2
+#### 0.7.0
+* Change shadow plugin to latest version (1.2.1) which is compatible with Gradle 2.2+
+* Changes default Gradle wrapper version to 2.3
+* Applying the plugin will only affect the configuration of the project the plugin was applied to. Subprojects need to be configured separately.
+* Adds a task for preparing a RapidMiner Home environment for extension process tests 
+* Adds RapidMiner Studio core test artifact as testCompile dependency for running process tests without checking out the RapidMiner Studio Git repository
 
 #### 0.6.2
-* Downgrade shadow plugin to version 1.0.3 (breaks build with Gradle 2.2)
+* Downgraded shadow plugin to version 1.0.3 (breaks build with Gradle 2.2)
 * Do not configure remote Maven repository if credentials and URL aren't set
 
 #### 0.6.1
@@ -18,7 +22,7 @@
 * Removes 'publishExtension' task as Jar publication was removed in version 0.5.4 (use Extension publication tasks from now on)
 
 #### 0.5.4
-* Changes default wrapper Gradle version to 2.1
+* Changes default Gradle wrapper version to 2.1
 * Updates java-basics plugin to version 3.0.0 (which removes superfluous publish targets)
 * Updates shadow plugin to version 1.0.3
 
