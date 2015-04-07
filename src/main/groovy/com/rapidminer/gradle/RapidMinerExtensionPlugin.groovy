@@ -138,7 +138,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 
 			// add and configure Gradle wrapper task
 			def wrapperTask = tasks.create(name: 'wrapper', type: org.gradle.api.tasks.wrapper.Wrapper)
-			wrapperTask.description = "Adds/Updates the Gradle warpper."
+			wrapperTask.description = "Adds/Updates the Gradle wrapper."
 			wrapper { gradleVersion = "${->extensionConfig.wrapperVersion}" }
 
 			// define extension group as lazy GString
