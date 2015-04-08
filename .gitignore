@@ -8,3 +8,5 @@ target/
 config/checkstyle/checkstyle.xml
 config/checkstyle/checkstyle.xsl
 config/codenarc/codenarc.conf
+.idea/
+*.iml

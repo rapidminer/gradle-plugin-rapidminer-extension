@@ -67,6 +67,8 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			// publication before any other plugin accesses the publishing extension
 			apply plugin: 'maven-publish'
 			apply plugin: 'java'
+
+			// shadowJar is being used to create a shaded extension jar
 			apply plugin: 'com.github.johnrengelman.shadow'
 
 			ext {
@@ -101,21 +103,23 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 					}
 				}
 			}
-
-			// shadowJar is being used to create a shaded extension jar
-			apply plugin: 'com.rapidminer.gradle.java-basics'
-			apply plugin: 'com.rapidminer.gradle.code-quality'
+			
+			// Add Java basics and code style plugins
+			apply plugin: 'com.rapidminer.java-basics'
+			apply plugin: 'com.rapidminer.code-quality'
 
 			try {
 				apply plugin: 'com.rapidminer.gradle.release'
 			} catch(e) {
-				project.logger.error "Could not apply release plugin", e
+				project.logger.error "Could not apply release plugin. Probably the extension is not saved in a Git repository."
 			}
 
 			// Let compile extend from provided. 
 			// This ensures that newer versions of compile dependencies do overwrite older versions from provided configuration.
-			configurations { compile.extendsFrom provided }
-
+			configurations { 
+				compile.extendsFrom project.configurations.provided
+			}
+			
 			defaultTasks 'installExtension'
 
 			// Create 'install' task, will be configured later
@@ -133,7 +137,8 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			}
 
 			// add and configure Gradle wrapper task
-			tasks.create(name: 'wrapper', type: org.gradle.api.tasks.wrapper.Wrapper)
+			def wrapperTask = tasks.create(name: 'wrapper', type: org.gradle.api.tasks.wrapper.Wrapper)
+			wrapperTask.description = "Adds/Updates the Gradle wrapper."
 			wrapper { gradleVersion = "${->extensionConfig.wrapperVersion}" }
 
 			// define extension group as lazy GString
@@ -158,20 +163,30 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			}
 			jar.dependsOn checkManifestEntries
 			shadowJar.dependsOn checkManifestEntries
-
+			
 			// Configuring the properties below can only be accomplished after
 			// the project extension 'extension' has been configured
 			afterEvaluate {
 
-				// add RapidMiner and configured extensions as dependency to all projects
-				allprojects { Project p ->
-					dependencies {
-						provided getRapidMinerDependency(project)
-						extensionConfig.dependencies.extensions.each{  e ->
-							provided group: e.group, name: e.namespace, version: e.version
+				def rmDep = getRapidMinerDependency(project)
+				project.logger.info "Adding RapidMiner Core dependency  (${rmDep})"
+				
+				// add RapidMiner and configured extensions as dependencies
+				dependencies {
+					provided rmDep
+					extensionConfig.dependencies.extensions.each{  e ->
+						if(project.logger.infoEnabled) {
+							project.logger.info "Adding RapidMiner Extension dependency (${e})"
 						}
+						provided group: e.group, name: e.namespace, version: e.version
 					}
 				}
+				
+				// Check if test environment should be configured
+				if(extensionConfig.configureProcessTestEnv && !extensionConfig.dependencies.useAntArtifact){
+					configureProcessTestEnvironment(project)
+				}
+				
 
 				// add check for manifest entries to avoid generic 'null' error
 				assignReleaseManifestEntries(project)
@@ -223,6 +238,111 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 				}
 			}
 		}
+	}
+	
+	def configureProcessTestEnvironment(Project project){
+		
+		def rmTestHome = project.file("${project.buildDir}/tmp/rapidminerHome/").absolutePath
+		def testProperties = [:]
+		testProperties['rapidminer.test.repository.local'] = 'true'
+		testProperties['rapidminer.test.repository.location'] = '//junit/'
+		testProperties['rapidminer.test.repository.dbURL'] = 'http://192.168.1.2:8080/'
+		testProperties['rapidminer.test.repository.local'] = 'true'
+		testProperties['rapidminer.test.repository.user'] = 'junit'
+		testProperties['rapidminer.test.repository.password'] = 'junit2'
+		testProperties['rapidminer.test.repository.exclude'] = '.*NOTEST.*'
+		testProperties['rapidminer.test.repository.url'] =  project.file('test-processes/').absolutePath
+		testProperties['rapidminer.home'] = rmTestHome
+		
+		// Add prepareRapidMiner Home in any case
+		project.configure(project) {
+			
+			configurations {
+				testsFromJar
+				testCompile.extendsFrom testsFromJar
+				testExtension {
+					description 'Extensions that will be installed into RapidMiner home for process testing'
+					transitive = false
+				}
+			}
+			
+			// Add dependencies for running process tests. 
+			// Always use the latest version of core and extension dependencies to ensure compability with most recent versions.
+			dependencies {
+				testsFromJar group: 'com.rapidminer.studio', name: 'rapidminer-studio-integration-tests', version: '+', classifier: 'test'
+				testCompile group: 'com.rapidminer.studio', name: 'rapidminer-studio-core', version: '+', classifier: 'test'
+				project.extensionConfig.dependencies.extensions.each{  e ->
+					if(project.logger.infoEnabled) {
+						project.logger.info "Adding RapidMiner Extension as test dependency (${e})"
+					}
+					testExtension group: e.group, name: e.namespace, version: '+', classifier: 'all'
+				}
+			}
+			
+			def prepareRMHomeTask = tasks.create(name: 'prepareRapidMinerHome', type: org.gradle.api.tasks.Sync)
+			prepareRMHomeTask.group = 'test'
+			prepareRMHomeTask.description = "Prepares a RapidMiner Home location for extension process testing."
+			prepareRapidMinerHome {
+				into "${rmTestHome}/lib/plugins"
+				from shadowJar
+				from configurations.testExtension
+			}
+			
+			test {
+				dependsOn prepareRapidMinerHome
+				
+				// set system properties, as they are null by default
+				systemProperties = System.properties
+				
+				// Define default extension test properties
+				testProperties.each { k, v ->
+					systemProperty k, v
+				}
+				
+				testLogging.showStandardStreams = true
+			}
+		}
+		
+		if(project.extensionConfig.runProcessTests){
+			project.configure(project){
+				configurations {
+					junitAnt
+				}
+				
+				dependencies {
+					junitAnt 'org.apache.ant:ant-junit:1.9.3'
+				}
+				
+				ant.taskdef(name: 'antJunit', classname: 'org.apache.tools.ant.taskdefs.optional.junit.JUnitTask', classpath: configurations.junitAnt.asPath)
+				def runProcessTestTask = tasks.create('runProcessTests')
+				runProcessTests {
+					doLast {
+						def testResultDir = project.file("${buildDir}/test-results/")
+						if(!testResultDir.exists()) {
+							testResultDir.mkdirs()
+						}
+						configurations.testsFromJar.each {
+							file ->
+							ant.antJunit(printsummary:'on', fork:'true', showoutput:'yes', haltonfailure:'false') { //configure junit task as per your need
+								formatter (type: 'xml')
+								batchtest(todir: testResultDir, skipNonTests:'true' ) {
+									zipfileset(src: file, includes:"**/TestRepositorySuite.class")
+								}
+								classpath {
+									fileset(file: file)
+									pathelement(path: sourceSets.main.compileClasspath.asPath + sourceSets.test.compileClasspath.asPath)
+								}
+								testProperties.each { k, v ->
+									sysproperty(key: k ,value: v)
+								}
+							}
+						}
+					}
+				}
+				test.dependsOn runProcessTests
+			}
+		}
+		
 	}
 
 	def getResolvedArtifacts(Set<ResolvedArtifact> artifacts) {
