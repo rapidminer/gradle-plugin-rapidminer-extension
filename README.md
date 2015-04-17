@@ -7,9 +7,9 @@ The plugin...
 * ... adds RapidMiner and configured RapidMiner extensions as provided dependencies 
 * ... ensures that the created extension jars MANIFEST.MF contains valid and correct entries
 
-## How to use (requires Gradle 2.1+)
+## How to use (requires Gradle 2.3+)
 	plugins {
-		id 'com.rapidminer.extension' version «plugin version»
+		id 'com.rapidminer.extension' version <plugin version>
 	}
 	
 	extensionConfig {
@@ -157,9 +157,9 @@ The plugin...
 	}
 
 ## Applied Plugins
-* rapidminer-java-basics
-* rapidminer-code-quality
-* rapidminer-release
+* com.rapidminer.java-basics
+* com.rapidminer.code-quality
+* com.rapidminer.release
 * com.github.johnrengelman.shadow
 
 ## Added Tasks
@@ -173,4 +173,4 @@ This task depends on the publication tasks of the extensionJar Maven publication
 It publishes the extension .jar and the shaded extension .jar to the configured Maven repository.
 
 ##### wrapper
-This tasks downloads and installes the Gradle wrapper with the specified Gradle version.
+This tasks downloads and installs the Gradle wrapper with the specified Gradle version.
