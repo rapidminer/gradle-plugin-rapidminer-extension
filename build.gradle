@@ -1,9 +1,15 @@
-plugins {
-	id 'com.rapidminer.gradle-plugin' version '0.2.9'
+buildscript {
+	dependencies {
+		classpath 'com.rapidminer.gradle:gradle-plugin:0.3.0-SNAPSHOT'
+	}
 }
+
+apply plugin: 'com.rapidminer.gradle-plugin'
 
 gradlePlugin {
 	id 'extension'
+	description 'Plugin for easy configuration of RapidMiner extensions builds.'
+	displayName 'RapidMiner Extension Plugin'
 }
 
 dependencies {
