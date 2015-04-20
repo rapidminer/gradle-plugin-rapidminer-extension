@@ -31,6 +31,46 @@ class ExtensionInitialization extends DefaultTask {
     @TaskAction
     def initializeExtension() {
 
+        /*
+         * Check if an init class is already present and forbid further execution
+         * if this is the case.
+         */
+        def initClass
+        try {
+            initClass = RapidMinerExtensionPlugin.checkInitClass(project, project.extensionConfig.resources,
+                    project.extensionConfig.name?.replace(' ', '') ?: '', project.logger)
+        } catch(e){
+            project.logger.warn e.message
+            // ignore as file is not present
+        }
+        if(initClass){
+            throw new GradleException("RapidMiner Extension repository already present. " +
+                    "Found extension init class '$initClass'. Please remove all files except 'build.gradle' and re-run the task.")
+        }
+
+        Console console = System.console()
+        if(console){
+            println '> ################################'
+            println '> '
+            println '> Initializing a new RapidMiner extension project with following settings: '
+            println '> '
+            println "> Extension name: $project.extensionConfig.name"
+            println "> Namespace: $project.extensionConfig.namespace"
+            println "> Default package: $project.extensionConfig.groupId"
+            println "> Vendor: $project.extensionConfig.vendor"
+            println "> Homepage: $project.extensionConfig.homepage"
+            println '> '
+            println '> ################################'
+            println '> '
+            println ''
+            def proceed = console.readLine('> Proceed [Y/n]:') ?: 'y'
+            if(!proceed.toLowerCase(Locale.ENGLISH).startsWith('y')){
+                throw new GradleException('RapidMiner Extension project initialization aborted.')
+            }
+        } else {
+            throw new GradleException('No console available. Cannot initialize a new RapidMiner Extension project.')
+        }
+
         // .gitignore
         copyResource('gitignore')
         def gitIgnoreFile = project.file('gitignore')

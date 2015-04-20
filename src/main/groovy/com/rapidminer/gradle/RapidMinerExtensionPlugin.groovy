@@ -143,7 +143,8 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 
 			// Add extension initialization task
 			def initTask = tasks.create(name: 'initializeExtensionProject', type: ExtensionInitialization, dependsOn: wrapperTask)
-			initTask.description = 'Initializes a extension project with all files needed to start the development of an RapidMiner Studio extension.'
+			initTask.description = 'Initializes a extension project with all files needed to start the development of a RapidMiner Studio extension.'
+			initTask.group = EXTENSION_GROUP
 
 			// define extension group as lazy GString
 			// see http://forums.gradle.org/gradle/topics/how_do_you_delay_configuration_of_a_task_by_a_custom_plugin_using_the_extension_method
@@ -416,7 +417,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 		}
 	}
 
-	def checkInitClass(Project project, res, name, logger){
+	def static checkInitClass(Project project, res, name, logger){
 		// Check if init class is user defined
 		def defaultFileName = DEFAULT_JAVA_PATH + RAPIDMINER_PACKAGE + INIT_CLASS_PREFIX + name + JAVA_EXTENSION
 		if(!res.initClass){
