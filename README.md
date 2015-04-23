@@ -165,6 +165,9 @@ The plugin...
 ## Added Tasks
 Apart from the tasks added by the applied plugins, following tasks are added:
 
+##### initializeExtensionProject
+When executing this task a fresh RapidMiner extension project is setup by using the configuration of the build.gradle file.
+
 ##### installExtension
 This task depends on the _shadow_ task, which creates a Jar containing the extension source code as well as all dependencies (shaded/shadow jar). This jar is copied to %rapidminerHome%/lib/plugins.
 
