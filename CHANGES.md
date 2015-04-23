@@ -6,6 +6,8 @@
 * Applying the plugin will only affect the configuration of the project the plugin was applied to. Subprojects need to be configured separately.
 * Adds a task for preparing a RapidMiner Home environment for extension process tests 
 * Adds RapidMiner Studio core test artifact as testCompile dependency for running process tests without checking out the RapidMiner Studio Git repository
+* Replaced 'rapidminerHome' extensionConfig property with 'extensionFolder' property. 
+  Extensions are now installed into ~/.RapidMiner/extensions by default if the 'extensionFolder' property is not set.
 
 #### 0.6.2
 * Downgraded shadow plugin to version 1.0.3 (breaks build with Gradle 2.2)

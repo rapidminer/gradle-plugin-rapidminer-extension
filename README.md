@@ -7,7 +7,7 @@ The plugin...
 * ... adds RapidMiner and configured RapidMiner extensions as provided dependencies 
 * ... ensures that the created extension jars MANIFEST.MF contains valid and correct entries
 
-## How to use (requires Gradle 2.1+)
+## How to use (requires Gradle 2.3+)
 	plugins {
 		id 'com.rapidminer.extension' version «plugin version»
 	}
@@ -33,17 +33,18 @@ The plugin...
 		/*
 		 * The extension vendor. By default it is 'RapidMiner GmbH'.
 		 */
-		vendor = "RapidMiner GmbH"
+		vendor = 'RapidMiner GmbH'
 		
 		/*
 		 * The vendor homepage. By default it is 'www.rapidminer.com'.
 		 */
-		homepage = "www.rapidminer.com"
+		homepage = 'www.rapidminer.com'
 		
 		/*
-		 * The path to RapidMiner Studio. It is used to deploy the extension to '$rapidminerHome/lib/plugins'.
+		 * The absolute path to the folder extensions are copied to when executing the 'installExtension' task.
+		 * By default extensions are copied to '~/.RapidMiner/extensions/'.
 		 */
-		rapidminerHome = "../rapidminer-studio"
+		extensionFolder = 'C:\\Users\\username\\.RapidMiner\\extensions\\'
 		
 		/*
 		 * The Gradle Wrapper version to be installed when invoking the 'wrapper' task.
@@ -61,7 +62,7 @@ The plugin...
 			 * This version will be added to the compile classpath as provided dependency. 
 			 * Default is '6.0.000'.
 			 */
-			rapidminer "5.3.000"
+			rapidminer '5.3.000'
 			
 			/*
 			 * Defines whether the old Ant artifact (com.rapidminer.studio:rapidmimer) should be
@@ -75,7 +76,7 @@ The plugin...
 			 * Syntax to add dependencies to other RapidMiner extensions.
 			 * Each defined extension will be added as provided dependency.
 			 */
-			extension namespace: "text", version: "5.3.3-SNAPSHOT"
+			extension namespace: 'text', version: '5.3.2'
 		}
 		
 		/*
@@ -157,9 +158,9 @@ The plugin...
 	}
 
 ## Applied Plugins
-* rapidminer-java-basics
-* rapidminer-code-quality
-* rapidminer-release
+* com.rapidminer.java-basics
+* com.rapidminer.code-quality
+* com.rapidminer.release
 * com.github.johnrengelman.shadow
 
 ## Added Tasks

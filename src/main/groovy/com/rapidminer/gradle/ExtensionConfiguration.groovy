@@ -39,8 +39,8 @@ public class ExtensionConfiguration {
 	String vendor = "RapidMiner GmbH"
 	String homepage = "www.rapidminer.com"
 
-	String rapidminerHome = "../rapidminer-studio"
-	
+	String extensionFolder
+
 	String wrapperVersion = DEFAULT_WRAPPER_VERSION
 
 	// RapidMiner and Extension dependencies
