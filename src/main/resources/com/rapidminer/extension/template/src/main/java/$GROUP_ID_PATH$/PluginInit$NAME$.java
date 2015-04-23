@@ -24,7 +24,10 @@ import com.rapidminer.gui.MainFrame;
 
 
 /**
- * This class provides hooks for initialization.
+ * This class provides hooks for initialization and its methods are called via reflection by RapidMiner Studio.
+ * Without this class and its predefined methods, an extension will not be loaded.
+ *
+ * @author REPLACEME
  */
 public final class PluginInit$NAME$ {
 

@@ -1,18 +1,12 @@
 <ioobjects>
-<!--  
-    This is an example how to specify IOObjects and theirs various renderers.
+    <!-- This file is used to define new IOObjects, how they are called, their implementation class and
+            with what renderer they are displayed in the Results perspective  -->
+	<!--
 	<ioobject
-		name="Document"
-		class="com.rapidminer.operator.text.Document"
+		name="Example IOObject"
+		class="$GROUP_ID$.ioobjects.ExampleIOObject"
 		reportable="true">
-	  <renderer>com.rapidminer.gui.renderer.text.DocumentRenderer</renderer>
+	  <renderer>$GROUP_ID$.ioobjects.renderer.ExampleIOObjectRenderer</renderer>
 	</ioobject>
-	
-    <ioobject
-        name="Word List"
-        class="com.rapidminer.operator.text.WordList"
-        reportable="true">
-      <renderer>com.rapidminer.gui.renderer.DefaultTextRenderer</renderer>
-    </ioobject>
- -->
+    -->
 </ioobjects>

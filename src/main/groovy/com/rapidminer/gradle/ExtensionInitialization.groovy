@@ -71,12 +71,6 @@ class ExtensionInitialization extends DefaultTask {
             throw new GradleException('No console available. Cannot initialize a new RapidMiner Extension project.')
         }
 
-        // .gitignore
-        copyResource('gitignore')
-        def gitIgnoreFile = project.file('gitignore')
-        gitIgnoreFile.renameTo(project.file('.gitignore'))
-        gitIgnoreFile.delete()
-
         // create changes folder
         createFolder('changes/')
         copyResource('changes/CHANGES_1.0.000.txt')
@@ -87,7 +81,7 @@ class ExtensionInitialization extends DefaultTask {
 
         // create license folder
         createFolder('licenses/')
-        copyResource('licenses/LICENSE')
+        copyResource('licenses/README')
 
         // create test-processes folder
         createFolder('test-processes/')
@@ -131,7 +125,7 @@ class ExtensionInitialization extends DefaultTask {
      */
     private void copyResource(String relativePath) {
         if (project.file(relativePath).exists()) {
-            logger.info "'$relativePath' already exists. Skipping creation."
+            logger.debug "'$relativePath' already exists. Skipping creation."
             return
         }
         logger.info "Creating file '$relativePath'."
@@ -144,7 +138,7 @@ class ExtensionInitialization extends DefaultTask {
      */
     private getResourceAsText(String relativePath) {
         def fullPath = "/com/rapidminer/extension/template/$relativePath"
-        logger.info "Fetching resource at relative path $relativePath. Full path is: $fullPath"
+        logger.debug "Fetching resource at relative path $relativePath. Full path is: $fullPath"
         def resourceStream = ExtensionInitialization.getResourceAsStream(fullPath)
         if (!resourceStream) {
             throw new GradleException("Resource $fullPath not found!")

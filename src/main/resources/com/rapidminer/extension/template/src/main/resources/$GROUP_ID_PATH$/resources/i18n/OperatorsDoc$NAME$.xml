@@ -1,26 +1,19 @@
 <?xml version="1.0" encoding="windows-1252" standalone="no"?>
 <operatorHelp lang="en_EN">
-    <!--  This is an example how to specify the description of operators and the translation of it's key identifier
-    to names. 
+    <!--  This is an example how to specify the translation of operator keys to names. -->
+    <!--
+    <operator>
+      <key>example_operator_key</key>
+      <name>Example Operator Name</name>
+    </operator>
+    -->
 
-   <operator>
-      <name>SingleTextInput</name>
-      <synopsis>Generates word vectors from a single text.</synopsis>
-      <help />
-   </operator>
-   <operator>
-      <name>TextObjectWriter</name>
-      <synopsis>Writes a textobject into a file.</synopsis>
-      <help>This operator writes a given textObject into a file. It might be specified if an existing file with the same name should be overwritten.</help>
-   </operator>
-
-    This is how group ids are translated:
-    
-   <group>
-      <key>text_processing</key>
-      <name>Text Processing</name>
-   </group>
-
+    <!-- This is how group keys are translated: -->
+    <!--
+    <group>
+      <key>example_group</key>
+      <name>Example Group</name>
+    </group>
     -->
 
 </operatorHelp>
