@@ -9,7 +9,7 @@ The plugin...
 
 ## How to use (requires Gradle 2.3+)
 	plugins {
-		id 'com.rapidminer.extension' version «plugin version»
+		id 'com.rapidminer.extension' version <plugin version>
 	}
 	
 	extensionConfig {
@@ -166,6 +166,9 @@ The plugin...
 ## Added Tasks
 Apart from the tasks added by the applied plugins, following tasks are added:
 
+##### initializeExtensionProject
+When executing this task a fresh RapidMiner extension project is setup by using the configuration of the build.gradle file.
+
 ##### installExtension
 This task depends on the _shadow_ task, which creates a Jar containing the extension source code as well as all dependencies (shaded/shadow jar). This jar is copied to %rapidminerHome%/lib/plugins.
 
@@ -174,4 +177,4 @@ This task depends on the publication tasks of the extensionJar Maven publication
 It publishes the extension .jar and the shaded extension .jar to the configured Maven repository.
 
 ##### wrapper
-This tasks downloads and installes the Gradle wrapper with the specified Gradle version.
+This tasks downloads and installs the Gradle wrapper with the specified Gradle version.

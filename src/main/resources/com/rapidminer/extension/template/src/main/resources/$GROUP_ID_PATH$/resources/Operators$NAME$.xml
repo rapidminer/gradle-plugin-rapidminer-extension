@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<operators name="$NAMESPACE$" version="6.0" docbundle="$DOC_BUNDLE$">
+    <group key="">
+        <!-- This is an example how to specify Operators and Operator groups. The Operator groups define
+                where Operators will be located in the Operator tree. -->
+        <!--
+        <group key="example_group">
+           <operator>
+              <key>example_operator_key</key>
+              <class>$GROUP_ID$.operator.OperatorClass</class>
+           </operator>
+         </group>
+         -->
+    </group>
+</operators>

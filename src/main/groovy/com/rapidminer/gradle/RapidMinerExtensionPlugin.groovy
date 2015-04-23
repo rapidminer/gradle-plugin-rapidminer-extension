@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2014 RapidMiner GmbH.
+ * Copyright 2013-2015 RapidMiner GmbH.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,7 +119,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			configurations { 
 				compile.extendsFrom project.configurations.provided
 			}
-			
+
 			defaultTasks 'installExtension'
 
 			// Create 'install' task, will be configured later
@@ -138,7 +138,12 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			// add and configure Gradle wrapper task
 			def wrapperTask = tasks.create(name: 'wrapper', type: org.gradle.api.tasks.wrapper.Wrapper)
 			wrapperTask.description = "Adds/Updates the Gradle wrapper."
-			wrapper { gradleVersion = "${->extensionConfig.wrapperVersion}" }
+			wrapper { gradleVersion = "${extensionConfig.wrapperVersion}" }
+
+			// Add extension initialization task
+			def initTask = tasks.create(name: 'initializeExtensionProject', type: ExtensionInitialization)
+			initTask.group = EXTENSION_GROUP
+			initTask.description = 'Initializes a extension project with all files needed to start the development of a RapidMiner Studio extension.'
 
 			// define extension group as lazy GString
 			// see http://forums.gradle.org/gradle/topics/how_do_you_delay_configuration_of_a_task_by_a_custom_plugin_using_the_extension_method
@@ -431,7 +436,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 		}
 	}
 
-	def checkInitClass(Project project, res, name, logger){
+	def static checkInitClass(Project project, res, name, logger){
 		// Check if init class is user defined
 		def defaultFileName = DEFAULT_JAVA_PATH + RAPIDMINER_PACKAGE + INIT_CLASS_PREFIX + name + JAVA_EXTENSION
 		if(!res.initClass){
@@ -480,7 +485,6 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 		try {
 			return checkResourceFile(resourceName, suffix, userDefinedResource, project, res, name, logger, mandatory, subdirectory)
 		} catch(e){
-			e.printStackTrace()
 			logger.info "Could not find resource file for resource '${resourceName}'"
 			return "\$NOT_FOUND\$"
 		}

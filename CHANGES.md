@@ -1,11 +1,12 @@
 ## Change Log
 
 #### 0.7.0
+* Added an extension initialization task which creates a fresh extension project setup
 * Change shadow plugin to latest version (1.2.1) which is compatible with Gradle 2.2+
 * Changes default Gradle wrapper version to 2.3
 * Applying the plugin will only affect the configuration of the project the plugin was applied to. Subprojects need to be configured separately.
-* Adds a task for preparing a RapidMiner Home environment for extension process tests 
-* Adds RapidMiner Studio core test artifact as testCompile dependency for running process tests without checking out the RapidMiner Studio Git repository
+* Added a task that prepares a RapidMiner Home environment for extension process tests 
+* Added RapidMiner Studio core test artifact as testCompile dependency for running process tests without cloning the RapidMiner Studio Git repository
 * Replaced 'rapidminerHome' extensionConfig property with 'extensionFolder' property. 
   Extensions are now installed into ~/.RapidMiner/extensions by default if the 'extensionFolder' property is not set.
 
