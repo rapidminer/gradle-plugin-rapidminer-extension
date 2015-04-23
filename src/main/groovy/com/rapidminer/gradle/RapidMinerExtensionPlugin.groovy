@@ -142,7 +142,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			wrapper { gradleVersion = "${extensionConfig.wrapperVersion}" }
 
 			// Add extension initialization task
-			def initTask = tasks.create(name: 'initializeExtensionProject', type: ExtensionInitialization, dependsOn: wrapperTask)
+			def initTask = tasks.create(name: 'initializeExtensionProject', type: ExtensionInitialization)
 			initTask.group = EXTENSION_GROUP
 			initTask.description = 'Initializes a extension project with all files needed to start the development of a RapidMiner Studio extension.'
 
