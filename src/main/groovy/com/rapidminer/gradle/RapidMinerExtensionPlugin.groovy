@@ -127,12 +127,11 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 			def installTask = tasks.create(name:'installExtension', type: org.gradle.api.tasks.Copy, dependsOn: 'shadowJar')
 			installTask.group = EXTENSION_GROUP
 			installTask.description = "Create a jar bundled with all dependencies and copies the jar"+
-					" to '%rapidminerHome/lib/plugins'. %rapidminerHome can be configured by changing"+
-					" 'extensionConfig { rapidminerHome '...' }'. Default is '../rapidminer-studio'."
+					" to the configured 'extensionFolder'. By default the extension is copied to '~/.RapidMiner/extensions'."
 
 			// configure install task
 			installExtension {
-				into "${extensionConfig.rapidminerHome}/lib/plugins"
+				into getExtensionInstallFolder(project)
 				from shadowJar
 			}
 
@@ -241,6 +240,26 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 						}
 					}
 				}
+			}
+		}
+	}
+
+	def getExtensionInstallFolder(project){
+		return {
+			def installFolderPath = project.extensionConfig.extensionFolder
+			if (installFolderPath) {
+				// check if specified path is valid
+				if (new File(installFolderPath).isDirectory()) {
+					return installFolderPath
+				} else {
+					throw new GradleException("The path to the extension installation folder '$installFolderPath' is invalid. " +
+							"Please specify a path to a valid directory or remove the assignment to 'extensionFolder' to use the default path.")
+				}
+			} else {
+				// use default path (~/.RapidMiner/extensions/)
+				def defaultPath = "${System.properties['user.home']}/.RapidMiner/extensions/"
+				project.logger.info "Using default installation path for 'installExtension' task: $defaultPath"
+				return defaultPath
 			}
 		}
 	}
