@@ -105,6 +105,9 @@ class ExtensionInitialization extends DefaultTask {
         copyResource('src/main/resources/$GROUP_ID_PATH$/resources/i18n/OperatorsDoc$NAME$.xml')
         copyResource('src/main/resources/$GROUP_ID_PATH$/resources/i18n/UserErrorMessages$NAME$.properties')
         copyResource('src/main/resources/$GROUP_ID_PATH$/resources/i18n/Settings$NAME$.properties')
+
+        // Documentation example
+        copyResource('src/main/resources/$NAMESPACE$/example_group/example_operator_key.xml')
     }
 
     /**
