@@ -1,5 +1,7 @@
 ## Change Log
 
+#### 0.7.1
+
 #### 0.7.0
 * Added an extension initialization task which creates a fresh extension project setup
 * Change shadow plugin to latest version (1.2.1) which is compatible with Gradle 2.2+
