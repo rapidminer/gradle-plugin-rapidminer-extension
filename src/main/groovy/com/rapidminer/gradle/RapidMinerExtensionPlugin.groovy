@@ -22,7 +22,7 @@ import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.file.FileTree
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.plugins.JavaPlugin
-
+import org.gradle.api.tasks.Sync
 
 
 /**
@@ -303,7 +303,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 				}
 			}
 			
-			def prepareRMHomeTask = tasks.create(name: 'prepareRapidMinerHome', type: org.gradle.api.tasks.Sync)
+			def prepareRMHomeTask = tasks.create(name: 'prepareRapidMinerHome', type: Sync)
 			prepareRMHomeTask.group = 'test'
 			prepareRMHomeTask.description = "Prepares a RapidMiner Home location for extension process testing."
 			prepareRapidMinerHome {
