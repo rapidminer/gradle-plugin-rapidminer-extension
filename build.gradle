@@ -1,5 +1,5 @@
 plugins {
-	id 'com.rapidminer.gradle-plugin' version '0.3.2'
+	id 'com.rapidminer.gradle-plugin' version '0.3.5'
 }
 
 gradlePlugin {
@@ -16,8 +16,4 @@ dependencies {
 	compile 'com.github.jengelman.gradle.plugins:shadow:1.2.1'
 }
 
-afterEvaluate {
-	license {
-		exclude 'com/rapidminer/extension/template/**/*.java'
-	}
-}
+afterEvaluate { license { exclude 'com/rapidminer/extension/template/**/*.java'	} }
