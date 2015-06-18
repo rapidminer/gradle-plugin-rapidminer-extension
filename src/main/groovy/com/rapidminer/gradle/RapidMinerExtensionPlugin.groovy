@@ -271,12 +271,12 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 		testProperties['rapidminer.test.repository.local'] = 'true'
 		testProperties['rapidminer.test.repository.location'] = '//junit/'
 		testProperties['rapidminer.test.repository.dbURL'] = 'http://192.168.1.2:8080/'
-		testProperties['rapidminer.test.repository.local'] = 'true'
 		testProperties['rapidminer.test.repository.user'] = 'junit'
 		testProperties['rapidminer.test.repository.password'] = 'junit2'
 		testProperties['rapidminer.test.repository.exclude'] = '.*NOTEST.*'
 		testProperties['rapidminer.test.repository.url'] =  project.file('test-processes/').absolutePath
 		testProperties['rapidminer.home'] = rmTestHome
+		testProperties['java.awt.headless'] = 'true'
 		
 		// Add prepareRapidMiner Home in any case
 		project.configure(project) {
@@ -301,6 +301,9 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 					}
 					testExtension group: e.group, name: e.namespace, version: '+', classifier: 'all'
 				}
+
+				// add process testing extension as default dependency
+				testExtension group: 'com.rapidminer.extension', name: 'test', version: '+', classifier: 'all'
 			}
 			
 			def prepareRMHomeTask = tasks.create(name: 'prepareRapidMinerHome', type: Sync)
