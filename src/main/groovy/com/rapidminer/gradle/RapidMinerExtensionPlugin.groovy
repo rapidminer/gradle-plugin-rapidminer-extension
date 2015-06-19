@@ -20,9 +20,13 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.file.FileTree
+import org.gradle.api.publish.internal.DefaultPublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.publish.plugins.PublishingPlugin
+import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Sync
+import org.gradle.api.tasks.wrapper.Wrapper
 
 
 /**
@@ -48,8 +52,11 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
     private static final String XML_EXTENSION = ".xml"
     private static final String PROPERTIES_EXTENSION = ".properties"
 
+    def Project project
+
     @Override
     void apply(Project project) {
+        this.project = project
 
         // create 'extension' project extension
         project.extensions.create("extensionConfig", ExtensionConfiguration)
@@ -63,46 +70,12 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
     void configureProject(Project project) {
         project.configure(project) {
 
-            // Apply Maven and Java to be able to configure the extensionJar
-            // publication before any other plugin accesses the publishing extension
-            apply plugin: 'maven-publish'
+            // For publishing extension to Maven
             apply plugin: 'java'
+            apply plugin: 'com.rapidminer.java-publishing.extension'
 
             // shadowJar is being used to create a shaded extension jar
             apply plugin: 'com.github.johnrengelman.shadow'
-
-            ext {
-                // Publishing variables
-                SNAPSHOT = '-SNAPSHOT'
-                SNAPSHOT_REPO = 'libs-snapshot-local'
-                RELEASE_REPO = 'libs-release-local'
-                REPO = version.endsWith(SNAPSHOT) ? SNAPSHOT_REPO : RELEASE_REPO
-            }
-
-            // define Maven publications
-            publishing {
-                publications {
-                    extensionJar(MavenPublication) {
-                        from components.java
-                        artifact shadowJar { classifier 'all' }
-                        artifactId "${-> project.extensionConfig.namespace}"
-                    }
-                }
-                // Only set remote Maven repository if user, password, and contextURL are set
-                if (project.hasProperty('artifactory_user') &&
-                        project.hasProperty('artifactory_password') &&
-                        project.hasProperty('artifactory_contextUrl')) {
-                    repositories {
-                        maven {
-                            url "${artifactory_contextUrl}" + REPO
-                            credentials {
-                                username = "$artifactory_user"
-                                password = "$artifactory_password"
-                            }
-                        }
-                    }
-                }
-            }
 
             // Add Java basics and code style plugins
             apply plugin: 'com.rapidminer.java-basics'
@@ -114,17 +87,26 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                 project.logger.error "Could not apply release plugin. Probably the extension is not saved in a Git repository."
             }
 
+            // Configure extension artifact publications
+            publication {
+                artifactId = "${-> project.extensionConfig.namespace}"
+                releases {
+                    artifact shadowJar { classifier 'all' }
+                }
+                snapshots {
+                    artifact shadowJar { classifier 'all' }
+                }
+            }
+
             // Let compile extend from provided.
             // This ensures that newer versions of compile dependencies do overwrite older versions from provided configuration.
-            configurations {
-                compile.extendsFrom project.configurations.provided
-            }
+            configurations { compile.extendsFrom project.configurations.provided }
 
             defaultTasks 'installExtension'
 
             // Create 'install' task, will be configured later
             // Copies extension jar created by 'jar' task to the '/lib/plugins' directory of RapidMiner
-            def installTask = tasks.create(name: 'installExtension', type: org.gradle.api.tasks.Copy, dependsOn: 'shadowJar')
+            def installTask = tasks.create(name: 'installExtension', type: Copy, dependsOn: 'shadowJar')
             installTask.group = EXTENSION_GROUP
             installTask.description = "Create a jar bundled with all dependencies and copies the jar" +
                     " to the configured 'extensionFolder'. By default the extension is copied to '~/.RapidMiner/extensions'."
@@ -136,7 +118,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
             }
 
             // add and configure Gradle wrapper task
-            def wrapperTask = tasks.create(name: 'wrapper', type: org.gradle.api.tasks.wrapper.Wrapper)
+            def wrapperTask = tasks.create(name: 'wrapper', type: Wrapper)
             wrapperTask.description = "Adds/Updates the Gradle wrapper."
             wrapper { gradleVersion = "${extensionConfig.wrapperVersion}" }
 
