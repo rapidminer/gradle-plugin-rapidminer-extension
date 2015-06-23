@@ -257,24 +257,30 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
         testProperties['rapidminer.test.repository.exclude'] = '.*NOTEST.*'
         testProperties['rapidminer.test.repository.url'] = project.file('test-processes/').absolutePath
         testProperties['rapidminer.home'] = rmTestHome
-        testProperties['java.awt.headless'] = 'true'
 
-        // Add prepareRapidMiner Home in any case
-        project.configure(project) {
-            if (project.extensionConfig.runProcessTests) {
+        if (project.extensionConfig.runProcessTests) {
+            project.configure(project) {
+
                 configurations {
+                    // Needed to run TestRepositorySuite from integration-tests.jar
                     testsFromJar
                     testCompile.extendsFrom testsFromJar
+
+                    // Needed to deploy extension dependencies to rapidminerHome folder
                     testExtension {
                         description 'Extensions that will be installed into RapidMiner home for process testing'
                         transitive = false
                     }
+
+                    junitAnt
                 }
 
                 // Add dependencies for running process tests.
                 // Always use the latest version of core and extension dependencies to ensure compability with most recent versions.
                 dependencies {
+                    junitAnt 'org.apache.ant:ant-junit:1.9.3'
                     testsFromJar group: 'com.rapidminer.studio', name: 'rapidminer-studio-integration-tests', version: '+', classifier: 'test'
+                    testCompile group: 'com.rapidminer.studio', name: 'rapidminer-studio-core', version: '+'
                     testCompile group: 'com.rapidminer.studio', name: 'rapidminer-studio-core', version: '+', classifier: 'test'
                     project.extensionConfig.dependencies.extensions.each { e ->
                         if (project.logger.infoEnabled) {
@@ -307,21 +313,13 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                         systemProperty k, v
                     }
 
+                    jvmArgs '-Djava.awt.headless=true'
+
                     testLogging.showStandardStreams = true
-                }
-            }
-
-            project.configure(project) {
-                configurations {
-                    junitAnt
-                }
-
-                dependencies {
-                    junitAnt 'org.apache.ant:ant-junit:1.9.3'
                 }
 
                 ant.taskdef(name: 'antJunit', classname: 'org.apache.tools.ant.taskdefs.optional.junit.JUnitTask', classpath: configurations.junitAnt.asPath)
-                def runProcessTestTask = tasks.create('runProcessTests')
+                tasks.create('runProcessTests')
                 runProcessTests {
                     doLast {
                         def testResultDir = project.file("${buildDir}/test-results/")
@@ -331,18 +329,18 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                         configurations.testsFromJar.each {
                             file ->
                                 ant.antJunit(printsummary: 'on', fork: 'true', showoutput: 'yes', haltonfailure: 'false') {
-                                    //configure junit task as per your need
                                     formatter(type: 'xml')
                                     batchtest(todir: testResultDir, skipNonTests: 'true') {
                                         zipfileset(src: file, includes: "**/TestRepositorySuite.class")
                                     }
                                     classpath {
                                         fileset(file: file)
-                                        pathelement(path: sourceSets.main.compileClasspath.asPath + sourceSets.test.compileClasspath.asPath)
+                                        pathelement(path: sourceSets.test.compileClasspath.asPath)
                                     }
                                     testProperties.each { k, v ->
                                         sysproperty(key: k, value: v)
                                     }
+                                    jvmarg(value: '-Djava.awt.headless=true')
                                 }
                         }
                     }
@@ -350,7 +348,6 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                 test.dependsOn runProcessTests
             }
         }
-
     }
 
     def getResolvedArtifacts(Set<ResolvedArtifact> artifacts) {
