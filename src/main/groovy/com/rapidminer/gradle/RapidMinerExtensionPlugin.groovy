@@ -88,8 +88,9 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
             }
 
             // Configure extension artifact publications
+            project.logger.info "Configuring extension publication by adding 'all' artifacts and fixing artifactId."
             publication {
-                artifactId = "${-> project.extensionConfig.namespace}"
+                artifactId { project.extensionConfig.namespace }
                 releases {
                     artifact shadowJar { classifier 'all' }
                 }
