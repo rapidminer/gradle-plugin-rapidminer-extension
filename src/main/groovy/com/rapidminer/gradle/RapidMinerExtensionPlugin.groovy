@@ -20,9 +20,13 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.file.FileTree
+import org.gradle.api.publish.internal.DefaultPublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.publish.plugins.PublishingPlugin
+import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Sync
+import org.gradle.api.tasks.wrapper.Wrapper
 
 
 /**
@@ -32,541 +36,519 @@ import org.gradle.api.tasks.Sync
  */
 class RapidMinerExtensionPlugin implements Plugin<Project> {
 
-	private static final String EXTENSION_GROUP = "RapidMiner Extension"
+    private static final String EXTENSION_GROUP = "RapidMiner Extension"
 
-	private static final String RMX = "rmx_"
+    private static final String RMX = "rmx_"
 
-	private static final String DEFAULT_JAVA_PATH = "src/main/java/";
-	private static final String DEFAULT_RESOURCE_PATH = "src/main/resources/";
-	private static final String RAPIDMINER_PACKAGE = "com/rapidminer/";
-	private static final String RESOURCE_PACKAGE = RAPIDMINER_PACKAGE + "resources/"
-	private static final String I18N_PATH = "i18n/"
+    private static final String DEFAULT_JAVA_PATH = "src/main/java/";
+    private static final String DEFAULT_RESOURCE_PATH = "src/main/resources/";
+    private static final String RAPIDMINER_PACKAGE = "com/rapidminer/";
+    private static final String RESOURCE_PACKAGE = RAPIDMINER_PACKAGE + "resources/"
+    private static final String I18N_PATH = "i18n/"
 
-	private static final String INIT_CLASS_PREFIX = "PluginInit"
+    private static final String INIT_CLASS_PREFIX = "PluginInit"
 
-	private static final String JAVA_EXTENSION = ".java"
-	private static final String XML_EXTENSION = ".xml"
-	private static final String PROPERTIES_EXTENSION = ".properties"
+    private static final String JAVA_EXTENSION = ".java"
+    private static final String XML_EXTENSION = ".xml"
+    private static final String PROPERTIES_EXTENSION = ".properties"
 
-	@Override
-	void apply(Project project) {
+    def Project project
 
-		// create 'extension' project extension
-		project.extensions.create("extensionConfig", ExtensionConfiguration)
+    @Override
+    void apply(Project project) {
+        this.project = project
 
-		configureProject(project);
-	}
+        // create 'extension' project extension
+        project.extensions.create("extensionConfig", ExtensionConfiguration)
 
-	/**
-	 * Configures the project with default gradle plugins and provided configurations.
-	 */
-	void configureProject(Project project) {
-		project.configure(project) {
+        configureProject(project);
+    }
 
-			// Apply Maven and Java to be able to configure the extensionJar
-			// publication before any other plugin accesses the publishing extension
-			apply plugin: 'maven-publish'
-			apply plugin: 'java'
+    /**
+     * Configures the project with default gradle plugins and provided configurations.
+     */
+    void configureProject(Project project) {
+        project.configure(project) {
 
-			// shadowJar is being used to create a shaded extension jar
-			apply plugin: 'com.github.johnrengelman.shadow'
+            // For publishing extension to Maven
+            apply plugin: 'java'
+            apply plugin: 'com.rapidminer.java-publishing.extension'
 
-			ext {
-				// Publishing variables
-				SNAPSHOT = '-SNAPSHOT'
-				SNAPSHOT_REPO = 'libs-snapshot-local'
-				RELEASE_REPO = 'libs-release-local'
-				REPO = version.endsWith(SNAPSHOT) ?  SNAPSHOT_REPO : RELEASE_REPO
-			}
+            // shadowJar is being used to create a shaded extension jar
+            apply plugin: 'com.github.johnrengelman.shadow'
 
-			// define Maven publications
-			publishing {
-				publications {
-					extensionJar(MavenPublication) {
-						from components.java
-						artifact shadowJar { classifier 'all' }
-						artifactId "${->project.extensionConfig.namespace}"
-					}
-				}
-				// Only set remote Maven repository if user, password, and contextURL are set
-				if(project.hasProperty('artifactory_user') && 
-					project.hasProperty('artifactory_password') && 
-					project.hasProperty('artifactory_contextUrl')) {
-					repositories {
-						maven {
-							url "${artifactory_contextUrl}" + REPO
-							credentials {
-								username = "$artifactory_user"
-								password = "$artifactory_password"
-							}
-						}
-					}
-				}
-			}
-			
-			// Add Java basics and code style plugins
-			apply plugin: 'com.rapidminer.java-basics'
-			apply plugin: 'com.rapidminer.code-quality'
+            // Add Java basics and code style plugins
+            apply plugin: 'com.rapidminer.java-basics'
+            apply plugin: 'com.rapidminer.code-quality'
 
-			try {
-				apply plugin: 'com.rapidminer.gradle.release'
-			} catch(e) {
-				project.logger.error "Could not apply release plugin. Probably the extension is not saved in a Git repository."
-			}
+            try {
+                apply plugin: 'com.rapidminer.gradle.release'
+            } catch (e) {
+                project.logger.error "Could not apply release plugin. Probably the extension is not saved in a Git repository."
+            }
 
-			// Let compile extend from provided. 
-			// This ensures that newer versions of compile dependencies do overwrite older versions from provided configuration.
-			configurations { 
-				compile.extendsFrom project.configurations.provided
-			}
+            // Configure extension artifact publications
+            project.logger.info "Configuring extension publication by adding 'all' artifacts and fixing artifactId."
+            publication {
+                artifactId { project.extensionConfig.namespace }
+                releases {
+                    artifact shadowJar { classifier 'all' }
+                }
+                snapshots {
+                    artifact shadowJar { classifier 'all' }
+                }
+            }
 
-			defaultTasks 'installExtension'
+            // Let compile extend from provided.
+            // This ensures that newer versions of compile dependencies do overwrite older versions from provided configuration.
+            configurations { compile.extendsFrom project.configurations.provided }
 
-			// Create 'install' task, will be configured later
-			// Copies extension jar created by 'jar' task to the '/lib/plugins' directory of RapidMiner
-			def installTask = tasks.create(name:'installExtension', type: org.gradle.api.tasks.Copy, dependsOn: 'shadowJar')
-			installTask.group = EXTENSION_GROUP
-			installTask.description = "Create a jar bundled with all dependencies and copies the jar"+
-					" to the configured 'extensionFolder'. By default the extension is copied to '~/.RapidMiner/extensions'."
+            defaultTasks 'installExtension'
 
-			// configure install task
-			installExtension {
-				into getExtensionInstallFolder(project)
-				from shadowJar
-			}
+            // Create 'install' task, will be configured later
+            // Copies extension jar created by 'jar' task to the '/lib/plugins' directory of RapidMiner
+            def installTask = tasks.create(name: 'installExtension', type: Copy, dependsOn: 'shadowJar')
+            installTask.group = EXTENSION_GROUP
+            installTask.description = "Create a jar bundled with all dependencies and copies the jar" +
+                    " to the configured 'extensionFolder'. By default the extension is copied to '~/.RapidMiner/extensions'."
 
-			// add and configure Gradle wrapper task
-			def wrapperTask = tasks.create(name: 'wrapper', type: org.gradle.api.tasks.wrapper.Wrapper)
-			wrapperTask.description = "Adds/Updates the Gradle wrapper."
-			wrapper { gradleVersion = "${extensionConfig.wrapperVersion}" }
+            // configure install task
+            installExtension {
+                into getExtensionInstallFolder(project)
+                from shadowJar
+            }
 
-			// Add extension initialization task
-			def initTask = tasks.create(name: 'initializeExtensionProject', type: ExtensionInitialization)
-			initTask.group = EXTENSION_GROUP
-			initTask.description = 'Initializes a extension project with all files needed to start the development of a RapidMiner Studio extension.'
+            // add and configure Gradle wrapper task
+            def wrapperTask = tasks.create(name: 'wrapper', type: Wrapper)
+            wrapperTask.description = "Adds/Updates the Gradle wrapper."
+            wrapper { gradleVersion = "${extensionConfig.wrapperVersion}" }
 
-			// define extension group as lazy GString
-			// see http://forums.gradle.org/gradle/topics/how_do_you_delay_configuration_of_a_task_by_a_custom_plugin_using_the_extension_method
-			group = "${->project.extensionConfig.groupId}"
+            // Add extension initialization task
+            def initTask = tasks.create(name: 'initializeExtensionProject', type: ExtensionInitialization)
+            initTask.group = EXTENSION_GROUP
+            initTask.description = 'Initializes a extension project with all files needed to start the development of a RapidMiner Studio extension.'
 
-			def checkManifestTask = tasks.create(name: 'checkManifestEntries')
-			checkManifestTask.group = EXTENSION_GROUP
-			checkManifestTask.description = "Checks whether the extension manifest entries are correct."
+            // define extension group as lazy GString
+            // see http://forums.gradle.org/gradle/topics/how_do_you_delay_configuration_of_a_task_by_a_custom_plugin_using_the_extension_method
+            group = "${-> project.extensionConfig.groupId}"
 
-			checkManifestEntries {
-				doLast {
-					if(!project.extensionConfig.name){
-						throw new GradleException('No RapidMiner Extension name defined. Define via \'extensionConfig { name $NAME }\'.')
-					}
+            def checkManifestTask = tasks.create(name: 'checkManifestEntries')
+            checkManifestTask.group = EXTENSION_GROUP
+            checkManifestTask.description = "Checks whether the extension manifest entries are correct."
 
-					if(!project.extensionConfig.groupId) {
-						throw new GradleException('No groupdId defined! Define via \'extensionConfig { groupdId $GROUPID }\'. (default: \'com.rapidminer.extension\')')
-					}
-					checkReleaseManifestEntries(project)
-				}
-			}
-			jar.dependsOn checkManifestEntries
-			shadowJar.dependsOn checkManifestEntries
-			
-			// Configuring the properties below can only be accomplished after
-			// the project extension 'extension' has been configured
-			afterEvaluate {
+            checkManifestEntries {
+                doLast {
+                    if (!project.extensionConfig.name) {
+                        throw new GradleException('No RapidMiner Extension name defined. Define via \'extensionConfig { name $NAME }\'.')
+                    }
 
-				def rmDep = getRapidMinerDependency(project)
-				project.logger.info "Adding RapidMiner Core dependency  (${rmDep})"
-				
-				// add RapidMiner and configured extensions as dependencies
-				dependencies {
-					provided rmDep
-					extensionConfig.dependencies.extensions.each{  e ->
-						if(project.logger.infoEnabled) {
-							project.logger.info "Adding RapidMiner Extension dependency (${e})"
-						}
-						provided group: e.group, name: e.namespace, version: e.version
-					}
-				}
-				
-				// Check if test environment should be configured
-				if(extensionConfig.configureProcessTestEnv && !extensionConfig.dependencies.useAntArtifact){
-					configureProcessTestEnvironment(project)
-				}
-				
+                    if (!project.extensionConfig.groupId) {
+                        throw new GradleException('No groupdId defined! Define via \'extensionConfig { groupdId $GROUPID }\'. (default: \'com.rapidminer.extension\')')
+                    }
+                    checkReleaseManifestEntries(project)
+                }
+            }
+            jar.dependsOn checkManifestEntries
+            shadowJar.dependsOn checkManifestEntries
 
-				// add check for manifest entries to avoid generic 'null' error
-				assignReleaseManifestEntries(project)
+            // Configuring the properties below can only be accomplished after
+            // the project extension 'extension' has been configured
+            afterEvaluate {
 
-				// configure create extension release task
-				jar {
-					// configure manifest
-					manifest {
-						attributes(
-								"Manifest-Version": 		"1.0",
-								"Implementation-Vendor": 	project.extensionConfig.vendor ?: '',
-								"Implementation-Title":		project.extensionConfig.name ?: '',
-								"Implementation-URL":		project.extensionConfig.homepage ?: '',
-								"Implementation-Version": 	project.version ?: '',
-								"Specification-Title": 		project.extensionConfig.name ?: '',
-								"Specification-Version":	project.version ?: '',
-								"RapidMiner-Version":		getRapidMinerVersion(project) ?: '',
-								"RapidMiner-Type":			"RapidMiner_Extension",
-								"Plugin-Dependencies":		getExtensionDependencies(project) ?: '',
+                def rmDep = getRapidMinerDependency(project)
+                project.logger.info "Adding RapidMiner Core dependency  (${rmDep})"
 
-								// Definition of important files
-								"Extension-ID":					RMX + (project.extensionConfig.namespace ?: ''),
-								"Namespace":					project.extensionConfig.namespace ?: '',
-								"Initialization-Class":			project.extensionConfig.resources.initClass ?: '',
-								"IOObject-Descriptor":			project.extensionConfig.resources.objectDefinition ?: '',
-								"Operator-Descriptor":			project.extensionConfig.resources.operatorDefinition ?: '',
-								"ParseRule-Descriptor":			project.extensionConfig.resources.parseRuleDefinition ?: '',
-								"Group-Descriptor":				project.extensionConfig.resources.groupProperties ?: '',
-								"Error-Descriptor":				project.extensionConfig.resources.errorDescription ?: '',
-								"UserError-Descriptor":			project.extensionConfig.resources.userErrors ?: '',
-								"GUI-Descriptor":				project.extensionConfig.resources.guiDescription ?: '',
-								"Settings-Descriptor":			project.extensionConfig.resources.settingsDescriptor ?: '',
-								"SettingsStructure-Descriptor":	project.extensionConfig.resources.settingsStructureDescriptor ?: ''
-								)
-					}
-				}
+                // add RapidMiner and configured extensions as dependencies
+                dependencies {
+                    provided rmDep
+                    extensionConfig.dependencies.extensions.each { e ->
+                        if (project.logger.infoEnabled) {
+                            project.logger.info "Adding RapidMiner Extension dependency (${e})"
+                        }
+                        provided group: e.group, name: e.namespace, version: e.version
+                    }
+                }
 
-				// ensure provided dependencies are not compiled into shadowJar
-				def firstLevelProvided = project.configurations.provided.getResolvedConfiguration().getFirstLevelModuleDependencies()
-				def artifactsToExclude = getResolvedArtifacts(firstLevelProvided)
+                // Check if test environment should be configured
+                if (extensionConfig.configureProcessTestEnv && !extensionConfig.dependencies.useAntArtifact) {
+                    configureProcessTestEnvironment(project)
+                }
 
-				artifactsToExclude.each { artifact ->
-					project.logger.info "Excluding ${artifact} from being bundled into the shadow jar."
-					shadowJar {
-						dependencies {
-							exclude(dependency(artifact))
-						}
-					}
-				}
-			}
-		}
-	}
+                // add check for manifest entries to avoid generic 'null' error
+                assignReleaseManifestEntries(project)
 
-	def getExtensionInstallFolder(project){
-		return {
-			def installFolderPath = project.extensionConfig.extensionFolder
-			if (installFolderPath) {
-				// check if specified path is valid
-				if (new File(installFolderPath).isDirectory()) {
-					return installFolderPath
-				} else {
-					throw new GradleException("The path to the extension installation folder '$installFolderPath' is invalid. " +
-							"Please specify a path to a valid directory or remove the assignment to 'extensionFolder' to use the default path.")
-				}
-			} else {
-				// use default path (~/.RapidMiner/extensions/)
-				def defaultPath = "${System.properties['user.home']}/.RapidMiner/extensions/"
-				project.logger.info "Using default installation path for 'installExtension' task: $defaultPath"
-				return defaultPath
-			}
-		}
-	}
-	
-	def configureProcessTestEnvironment(Project project){
-		
-		def rmTestHome = project.file("${project.buildDir}/tmp/rapidminerHome/").absolutePath
-		def testProperties = [:]
-		testProperties['rapidminer.test.repository.local'] = 'true'
-		testProperties['rapidminer.test.repository.location'] = '//junit/'
-		testProperties['rapidminer.test.repository.dbURL'] = 'http://192.168.1.2:8080/'
-		testProperties['rapidminer.test.repository.local'] = 'true'
-		testProperties['rapidminer.test.repository.user'] = 'junit'
-		testProperties['rapidminer.test.repository.password'] = 'junit2'
-		testProperties['rapidminer.test.repository.exclude'] = '.*NOTEST.*'
-		testProperties['rapidminer.test.repository.url'] =  project.file('test-processes/').absolutePath
-		testProperties['rapidminer.home'] = rmTestHome
-		
-		// Add prepareRapidMiner Home in any case
-		project.configure(project) {
-			
-			configurations {
-				testsFromJar
-				testCompile.extendsFrom testsFromJar
-				testExtension {
-					description 'Extensions that will be installed into RapidMiner home for process testing'
-					transitive = false
-				}
-			}
-			
-			// Add dependencies for running process tests. 
-			// Always use the latest version of core and extension dependencies to ensure compability with most recent versions.
-			dependencies {
-				testsFromJar group: 'com.rapidminer.studio', name: 'rapidminer-studio-integration-tests', version: '+', classifier: 'test'
-				testCompile group: 'com.rapidminer.studio', name: 'rapidminer-studio-core', version: '+', classifier: 'test'
-				project.extensionConfig.dependencies.extensions.each{  e ->
-					if(project.logger.infoEnabled) {
-						project.logger.info "Adding RapidMiner Extension as test dependency (${e})"
-					}
-					testExtension group: e.group, name: e.namespace, version: '+', classifier: 'all'
-				}
-			}
-			
-			def prepareRMHomeTask = tasks.create(name: 'prepareRapidMinerHome', type: Sync)
-			prepareRMHomeTask.group = 'test'
-			prepareRMHomeTask.description = "Prepares a RapidMiner Home location for extension process testing."
-			prepareRapidMinerHome {
-				into "${rmTestHome}/lib/plugins"
-				from shadowJar
-				from configurations.testExtension
-			}
-			
-			test {
-				dependsOn prepareRapidMinerHome
-				
-				// set system properties, as they are null by default
-				systemProperties = System.properties
-				
-				// Define default extension test properties
-				testProperties.each { k, v ->
-					systemProperty k, v
-				}
-				
-				testLogging.showStandardStreams = true
-			}
-		}
-		
-		if(project.extensionConfig.runProcessTests){
-			project.configure(project){
-				configurations {
-					junitAnt
-				}
-				
-				dependencies {
-					junitAnt 'org.apache.ant:ant-junit:1.9.3'
-				}
-				
-				ant.taskdef(name: 'antJunit', classname: 'org.apache.tools.ant.taskdefs.optional.junit.JUnitTask', classpath: configurations.junitAnt.asPath)
-				def runProcessTestTask = tasks.create('runProcessTests')
-				runProcessTests {
-					doLast {
-						def testResultDir = project.file("${buildDir}/test-results/")
-						if(!testResultDir.exists()) {
-							testResultDir.mkdirs()
-						}
-						configurations.testsFromJar.each {
-							file ->
-							ant.antJunit(printsummary:'on', fork:'true', showoutput:'yes', haltonfailure:'false') { //configure junit task as per your need
-								formatter (type: 'xml')
-								batchtest(todir: testResultDir, skipNonTests:'true' ) {
-									zipfileset(src: file, includes:"**/TestRepositorySuite.class")
-								}
-								classpath {
-									fileset(file: file)
-									pathelement(path: sourceSets.main.compileClasspath.asPath + sourceSets.test.compileClasspath.asPath)
-								}
-								testProperties.each { k, v ->
-									sysproperty(key: k ,value: v)
-								}
-							}
-						}
-					}
-				}
-				test.dependsOn runProcessTests
-			}
-		}
-		
-	}
+                // configure create extension release task
+                jar {
+                    // configure manifest
+                    manifest {
+                        attributes(
+                                "Manifest-Version": "1.0",
+                                "Implementation-Vendor": project.extensionConfig.vendor ?: '',
+                                "Implementation-Title": project.extensionConfig.name ?: '',
+                                "Implementation-URL": project.extensionConfig.homepage ?: '',
+                                "Implementation-Version": project.version ?: '',
+                                "Specification-Title": project.extensionConfig.name ?: '',
+                                "Specification-Version": project.version ?: '',
+                                "RapidMiner-Version": getRapidMinerVersion(project) ?: '',
+                                "RapidMiner-Type": "RapidMiner_Extension",
+                                "Plugin-Dependencies": getExtensionDependencies(project) ?: '',
 
-	def getResolvedArtifacts(Set<ResolvedArtifact> artifacts) {
-		Set<String> resolvedArtifacts = [] as Set
-		artifacts.each {
-			// add current artifact
-			resolvedArtifacts << "${it.moduleGroup}:${it.moduleName}:${it.moduleVersion}"
+                                // Definition of important files
+                                "Extension-ID": RMX + (project.extensionConfig.namespace ?: ''),
+                                "Namespace": project.extensionConfig.namespace ?: '',
+                                "Initialization-Class": project.extensionConfig.resources.initClass ?: '',
+                                "IOObject-Descriptor": project.extensionConfig.resources.objectDefinition ?: '',
+                                "Operator-Descriptor": project.extensionConfig.resources.operatorDefinition ?: '',
+                                "ParseRule-Descriptor": project.extensionConfig.resources.parseRuleDefinition ?: '',
+                                "Group-Descriptor": project.extensionConfig.resources.groupProperties ?: '',
+                                "Error-Descriptor": project.extensionConfig.resources.errorDescription ?: '',
+                                "UserError-Descriptor": project.extensionConfig.resources.userErrors ?: '',
+                                "GUI-Descriptor": project.extensionConfig.resources.guiDescription ?: '',
+                                "Settings-Descriptor": project.extensionConfig.resources.settingsDescriptor ?: '',
+                                "SettingsStructure-Descriptor": project.extensionConfig.resources.settingsStructureDescriptor ?: ''
+                        )
+                    }
+                }
 
-			// recursion to add children
-			resolvedArtifacts += getResolvedArtifacts(it.children)
-		}
-		return resolvedArtifacts
-	}
+                // ensure provided dependencies are not compiled into shadowJar
+                def firstLevelProvided = project.configurations.provided.getResolvedConfiguration().getFirstLevelModuleDependencies()
+                def artifactsToExclude = getResolvedArtifacts(firstLevelProvided)
 
-	def getArtifactId(Project project){
-		return project.extensionConfig.namespace
-	}
+                artifactsToExclude.each { artifact ->
+                    project.logger.info "Excluding ${artifact} from being bundled into the shadow jar."
+                    shadowJar {
+                        dependencies {
+                            exclude(dependency(artifact))
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-	def checkReleaseManifestEntries(Project project) {
-		assert project.version
-		assert project.extensionConfig.vendor
+    def getExtensionInstallFolder(project) {
+        return {
+            def installFolderPath = project.extensionConfig.extensionFolder
+            if (installFolderPath) {
+                // check if specified path is valid
+                if (new File(installFolderPath).isDirectory()) {
+                    return installFolderPath
+                } else {
+                    throw new GradleException("The path to the extension installation folder '$installFolderPath' is invalid. " +
+                            "Please specify a path to a valid directory or remove the assignment to 'extensionFolder' to use the default path.")
+                }
+            } else {
+                // use default path (~/.RapidMiner/extensions/)
+                def defaultPath = "${System.properties['user.home']}/.RapidMiner/extensions/"
+                project.logger.info "Using default installation path for 'installExtension' task: $defaultPath"
+                return defaultPath
+            }
+        }
+    }
 
-		def res = project.extensionConfig.resources
-		def name = project.extensionConfig.name?.replace(" ", "") ?: ''
-		def logger = project.logger
+    def configureProcessTestEnvironment(Project project) {
 
-		// Check for Initialization class
-		checkInitClass(project, res, name, logger)
+        def rmTestHome = project.file("${project.buildDir}/tmp/rapidminerHome/").absolutePath
+        def testProperties = [:]
+        testProperties['rapidminer.test.repository.local'] = 'true'
+        testProperties['rapidminer.test.repository.location'] = '//junit/'
+        testProperties['rapidminer.test.repository.dbURL'] = 'http://192.168.1.2:8080/'
+        testProperties['rapidminer.test.repository.user'] = 'junit'
+        testProperties['rapidminer.test.repository.password'] = 'junit2'
+        testProperties['rapidminer.test.repository.exclude'] = '.*NOTEST.*'
+        testProperties['rapidminer.test.repository.url'] = project.file('test-processes/').absolutePath
+        testProperties['rapidminer.home'] = rmTestHome
 
-		// Check for Operator definitions
-		def operatorsResource = checkResourceFile("Operators", XML_EXTENSION, res.operatorDefinition, project, res, name, logger, true)
-		def resourceFile = project.file(DEFAULT_RESOURCE_PATH + operatorsResource)
-		def docBundle = new XmlSlurper().parse(resourceFile)?.attributes()?.get('docbundle')
-		if(!docBundle){
-			throw new GradleException("No docBundle in operators definitions '${operatorsResource}' defined. \nWrong resource file selected? Please define path to Operator definitions manually.\nDefault path to operator definitions: ${RESOURCE_PACKAGE}Operators${name}.xml")
-		}
+        if (project.extensionConfig.runProcessTests) {
+            project.configure(project) {
 
-		def docBundleFile = project.file(DEFAULT_RESOURCE_PATH + docBundle + ".xml")
-		if(!docBundleFile.exists()){
-			throw new GradleException("DocBundle file defined in operators definitions ('${docBundle}') does not exists.")
-		}
-	}
+                configurations {
+                    // Needed to run TestRepositorySuite from integration-tests.jar
+                    testsFromJar
+                    testCompile.extendsFrom testsFromJar
+
+                    // Needed to deploy extension dependencies to rapidminerHome folder
+                    testExtension {
+                        description 'Extensions that will be installed into RapidMiner home for process testing'
+                        transitive = false
+                    }
+
+                    junitAnt
+                }
+
+                // Add dependencies for running process tests.
+                // Always use the latest version of core and extension dependencies to ensure compability with most recent versions.
+                dependencies {
+                    junitAnt 'org.apache.ant:ant-junit:1.9.3'
+                    testsFromJar group: 'com.rapidminer.studio', name: 'rapidminer-studio-integration-tests', version: '+', classifier: 'test'
+                    testCompile group: 'com.rapidminer.studio', name: 'rapidminer-studio-core', version: '+'
+                    testCompile group: 'com.rapidminer.studio', name: 'rapidminer-studio-core', version: '+', classifier: 'test'
+                    project.extensionConfig.dependencies.extensions.each { e ->
+                        if (project.logger.infoEnabled) {
+                            project.logger.info "Adding RapidMiner Extension as test dependency (${e})"
+                        }
+                        testExtension group: e.group, name: e.namespace, version: '+', classifier: 'all'
+                    }
+
+                    // add process testing extension as default dependency
+                    testExtension group: 'com.rapidminer.extension', name: 'test', version: '+', classifier: 'all'
+                }
+
+                def prepareRMHomeTask = tasks.create(name: 'prepareRapidMinerHome', type: Sync)
+                prepareRMHomeTask.group = 'test'
+                prepareRMHomeTask.description = "Prepares a RapidMiner Home location for extension process testing."
+                prepareRapidMinerHome {
+                    into "${rmTestHome}/lib/plugins"
+                    from shadowJar
+                    from configurations.testExtension
+                }
+
+                test {
+                    dependsOn prepareRapidMinerHome
+
+                    // set system properties, as they are null by default
+                    systemProperties = System.properties
+
+                    // Define default extension test properties
+                    testProperties.each { k, v ->
+                        systemProperty k, v
+                    }
+
+                    jvmArgs '-Djava.awt.headless=true'
+
+                    testLogging.showStandardStreams = true
+                }
+
+                ant.taskdef(name: 'antJunit', classname: 'org.apache.tools.ant.taskdefs.optional.junit.JUnitTask', classpath: configurations.junitAnt.asPath)
+                tasks.create('runProcessTests')
+                runProcessTests {
+                    doLast {
+                        def testResultDir = project.file("${buildDir}/test-results/")
+                        if (!testResultDir.exists()) {
+                            testResultDir.mkdirs()
+                        }
+                        configurations.testsFromJar.each {
+                            file ->
+                                ant.antJunit(printsummary: 'on', fork: 'true', showoutput: 'yes', haltonfailure: 'false') {
+                                    formatter(type: 'xml')
+                                    batchtest(todir: testResultDir, skipNonTests: 'true') {
+                                        zipfileset(src: file, includes: "**/TestRepositorySuite.class")
+                                    }
+                                    classpath {
+                                        fileset(file: file)
+                                        pathelement(path: sourceSets.test.compileClasspath.asPath)
+                                    }
+                                    testProperties.each { k, v ->
+                                        sysproperty(key: k, value: v)
+                                    }
+                                    jvmarg(value: '-Djava.awt.headless=true')
+                                }
+                        }
+                    }
+                }
+                test.dependsOn runProcessTests
+            }
+        }
+    }
+
+    def getResolvedArtifacts(Set<ResolvedArtifact> artifacts) {
+        Set<String> resolvedArtifacts = [] as Set
+        artifacts.each {
+            // add current artifact
+            resolvedArtifacts << "${it.moduleGroup}:${it.moduleName}:${it.moduleVersion}"
+
+            // recursion to add children
+            resolvedArtifacts += getResolvedArtifacts(it.children)
+        }
+        return resolvedArtifacts
+    }
+
+    def getArtifactId(Project project) {
+        return project.extensionConfig.namespace
+    }
+
+    def checkReleaseManifestEntries(Project project) {
+        assert project.version
+        assert project.extensionConfig.vendor
+
+        def res = project.extensionConfig.resources
+        def name = project.extensionConfig.name?.replace(" ", "") ?: ''
+        def logger = project.logger
+
+        // Check for Initialization class
+        checkInitClass(project, res, name, logger)
+
+        // Check for Operator definitions
+        def operatorsResource = checkResourceFile("Operators", XML_EXTENSION, res.operatorDefinition, project, res, name, logger, true)
+        def resourceFile = project.file(DEFAULT_RESOURCE_PATH + operatorsResource)
+        def docBundle = new XmlSlurper().parse(resourceFile)?.attributes()?.get('docbundle')
+        if (!docBundle) {
+            throw new GradleException("No docBundle in operators definitions '${operatorsResource}' defined. \nWrong resource file selected? Please define path to Operator definitions manually.\nDefault path to operator definitions: ${RESOURCE_PACKAGE}Operators${name}.xml")
+        }
+
+        def docBundleFile = project.file(DEFAULT_RESOURCE_PATH + docBundle + ".xml")
+        if (!docBundleFile.exists()) {
+            throw new GradleException("DocBundle file defined in operators definitions ('${docBundle}') does not exists.")
+        }
+    }
 
 
-	def assignReleaseManifestEntries(Project project) {
-		def res = project.extensionConfig.resources
-		def name = project.extensionConfig.name?.replace(" ", "") ?: ''
-		def logger = project.logger
+    def assignReleaseManifestEntries(Project project) {
+        def res = project.extensionConfig.resources
+        def name = project.extensionConfig.name?.replace(" ", "") ?: ''
+        def logger = project.logger
 
-		res.initClass = getInitClass(project, res, name, logger)
-		res.operatorDefinition = getResourceFile("Operators", XML_EXTENSION, res.operatorDefinition, project, res, name, logger, true)
-		res.objectDefinition = getResourceFile("ioobjects", XML_EXTENSION, res.objectDefinition, project, res, name, logger)
-		res.parseRuleDefinition = getResourceFile("parserules", XML_EXTENSION, res.parseRuleDefinition, project, res, name, logger)
-		res.groupProperties = getResourceFile("groups", PROPERTIES_EXTENSION, res.groupProperties, project, res, name, logger)
-		res.errorDescription = getResourceFile("Errors", PROPERTIES_EXTENSION, res.errorDescription, project, res, name, logger, false, I18N_PATH)
-		res.userErrors = getResourceFile("UserErrorMessage", PROPERTIES_EXTENSION, res.userErrors, project, res, name, logger, false,  I18N_PATH)
-		res.guiDescription = getResourceFile("GUI", PROPERTIES_EXTENSION, res.guiDescription, project, res, name, logger,  false, I18N_PATH)
-		res.settingsStructureDescriptor = getResourceFile("settings", XML_EXTENSION, res.settingsStructureDescriptor, project, res, name, logger,  false)
-		res.settingsDescriptor = getResourceFile("Settings", PROPERTIES_EXTENSION, res.settingsDescriptor, project, res, name, logger,  false, I18N_PATH)
-	}
+        res.initClass = getInitClass(project, res, name, logger)
+        res.operatorDefinition = getResourceFile("Operators", XML_EXTENSION, res.operatorDefinition, project, res, name, logger, true)
+        res.objectDefinition = getResourceFile("ioobjects", XML_EXTENSION, res.objectDefinition, project, res, name, logger)
+        res.parseRuleDefinition = getResourceFile("parserules", XML_EXTENSION, res.parseRuleDefinition, project, res, name, logger)
+        res.groupProperties = getResourceFile("groups", PROPERTIES_EXTENSION, res.groupProperties, project, res, name, logger)
+        res.errorDescription = getResourceFile("Errors", PROPERTIES_EXTENSION, res.errorDescription, project, res, name, logger, false, I18N_PATH)
+        res.userErrors = getResourceFile("UserErrorMessage", PROPERTIES_EXTENSION, res.userErrors, project, res, name, logger, false, I18N_PATH)
+        res.guiDescription = getResourceFile("GUI", PROPERTIES_EXTENSION, res.guiDescription, project, res, name, logger, false, I18N_PATH)
+        res.settingsStructureDescriptor = getResourceFile("settings", XML_EXTENSION, res.settingsStructureDescriptor, project, res, name, logger, false)
+        res.settingsDescriptor = getResourceFile("Settings", PROPERTIES_EXTENSION, res.settingsDescriptor, project, res, name, logger, false, I18N_PATH)
+    }
 
-	def getInitClass(Project project, res, name, logger){
-		try {
-			return checkInitClass(project, res, name, logger)
-		} catch(e) {
-			return "\$NOT_FOUND\$"
-		}
-	}
+    def getInitClass(Project project, res, name, logger) {
+        try {
+            return checkInitClass(project, res, name, logger)
+        } catch (e) {
+            return "\$NOT_FOUND\$"
+        }
+    }
 
-	def static checkInitClass(Project project, res, name, logger){
-		// Check if init class is user defined
-		def defaultFileName = DEFAULT_JAVA_PATH + RAPIDMINER_PACKAGE + INIT_CLASS_PREFIX + name + JAVA_EXTENSION
-		if(!res.initClass){
-			if(project.file(defaultFileName).exists()){
-				logger.info "Found default init class: '${defaultFileName}'"
-				return RAPIDMINER_PACKAGE.replace("/", ".") + INIT_CLASS_PREFIX + name
-			} else {
-				logger.info("Default init class  '${defaultFileName}' not found. Searching for alternatives in 'src/main/java' ...")
+    def static checkInitClass(Project project, res, name, logger) {
+        // Check if init class is user defined
+        def defaultFileName = DEFAULT_JAVA_PATH + RAPIDMINER_PACKAGE + INIT_CLASS_PREFIX + name + JAVA_EXTENSION
+        if (!res.initClass) {
+            if (project.file(defaultFileName).exists()) {
+                logger.info "Found default init class: '${defaultFileName}'"
+                return RAPIDMINER_PACKAGE.replace("/", ".") + INIT_CLASS_PREFIX + name
+            } else {
+                logger.info("Default init class  '${defaultFileName}' not found. Searching for alternatives in 'src/main/java' ...")
 
-				// Create a file tree with a base directory
-				FileTree tree = project.fileTree(dir: DEFAULT_JAVA_PATH, include: '**/*' + JAVA_EXTENSION)
+                // Create a file tree with a base directory
+                FileTree tree = project.fileTree(dir: DEFAULT_JAVA_PATH, include: '**/*' + JAVA_EXTENSION)
 
-				// Iterate over the contents of a tree
-				def initCandidate = null
-				tree.find { File file ->
-					if(file.getName().contains(INIT_CLASS_PREFIX)){
-						logger.info("Found potential init class: ${file.getPath()}")
-						def idx = file.getPath().indexOf(DEFAULT_JAVA_PATH.replace("/", File.separator))
-						initCandidate = file.getPath()
-								.substring(idx + DEFAULT_JAVA_PATH.length())
-								.replace(JAVA_EXTENSION, "")
-								.replace(File.separator, ".")
-						return true // take this one
-					}
-					return false // not found yet
-				}
+                // Iterate over the contents of a tree
+                def initCandidate = null
+                tree.find { File file ->
+                    if (file.getName().contains(INIT_CLASS_PREFIX)) {
+                        logger.info("Found potential init class: ${file.getPath()}")
+                        def idx = file.getPath().indexOf(DEFAULT_JAVA_PATH.replace("/", File.separator))
+                        initCandidate = file.getPath()
+                                .substring(idx + DEFAULT_JAVA_PATH.length())
+                                .replace(JAVA_EXTENSION, "")
+                                .replace(File.separator, ".")
+                        return true // take this one
+                    }
+                    return false // not found yet
+                }
 
-				// Still not found?
-				if(initCandidate == null){
-					throw new GradleException("No init class candidate found!")
-				}
-				logger.info "Selected init class: '${initCandidate}'"
-				return initCandidate
-			}
-		} else {
-			// check if user defined init class exists
-			def initClassFile = project.file(DEFAULT_JAVA_PATH + res.initClass.replace(".", File.separator) + ".java")
-			if(!initClassFile.exists()){
-				throw new GradleException("Extension init class '${initClassFile}' does not exist! \nDefault path: ${defaultFileName}")
-			}
-			return res.initClass // use the user-defined one
-		}
-	}
+                // Still not found?
+                if (initCandidate == null) {
+                    throw new GradleException("No init class candidate found!")
+                }
+                logger.info "Selected init class: '${initCandidate}'"
+                return initCandidate
+            }
+        } else {
+            // check if user defined init class exists
+            def initClassFile = project.file(DEFAULT_JAVA_PATH + res.initClass.replace(".", File.separator) + ".java")
+            if (!initClassFile.exists()) {
+                throw new GradleException("Extension init class '${initClassFile}' does not exist! \nDefault path: ${defaultFileName}")
+            }
+            return res.initClass // use the user-defined one
+        }
+    }
 
-	def getResourceFile(String resourceName, String suffix, userDefinedResource, Project project, res, name, logger, boolean mandatory = false, String subdirectory = ""){
-		try {
-			return checkResourceFile(resourceName, suffix, userDefinedResource, project, res, name, logger, mandatory, subdirectory)
-		} catch(e){
-			logger.info "Could not find resource file for resource '${resourceName}'"
-			return "\$NOT_FOUND\$"
-		}
-	}
+    def getResourceFile(String resourceName, String suffix, userDefinedResource, Project project, res, name, logger, boolean mandatory = false, String subdirectory = "") {
+        try {
+            return checkResourceFile(resourceName, suffix, userDefinedResource, project, res, name, logger, mandatory, subdirectory)
+        } catch (e) {
+            logger.info "Could not find resource file for resource '${resourceName}'"
+            return "\$NOT_FOUND\$"
+        }
+    }
 
-	def checkResourceFile(String resourceName, String suffix, userDefinedResource, Project project, res, name, logger, boolean mandatory = false, String subdirectory = ""){
-		// Check if resource file is user defined
-		def defaultResourceFile = RESOURCE_PACKAGE + subdirectory + resourceName + name + suffix
-		if(!userDefinedResource){
-			if(project.file(DEFAULT_RESOURCE_PATH + defaultResourceFile).exists()){
-				logger.info("Found default " + resourceName + " resource file: '" + defaultResourceFile + "'")
-				return defaultResourceFile
-			} else {
-				logger.info("Default " + resourceName + " resource file '" + defaultResourceFile + "' not found."
-						+" Searching for alternatives in "+ DEFAULT_RESOURCE_PATH + "...")
+    def checkResourceFile(String resourceName, String suffix, userDefinedResource, Project project, res, name, logger, boolean mandatory = false, String subdirectory = "") {
+        // Check if resource file is user defined
+        def defaultResourceFile = RESOURCE_PACKAGE + subdirectory + resourceName + name + suffix
+        if (!userDefinedResource) {
+            if (project.file(DEFAULT_RESOURCE_PATH + defaultResourceFile).exists()) {
+                logger.info("Found default " + resourceName + " resource file: '" + defaultResourceFile + "'")
+                return defaultResourceFile
+            } else {
+                logger.info("Default " + resourceName + " resource file '" + defaultResourceFile + "' not found."
+                        + " Searching for alternatives in " + DEFAULT_RESOURCE_PATH + "...")
 
-				// Create a file tree with a base directry
-				FileTree tree = project.fileTree(dir: DEFAULT_RESOURCE_PATH, include: "**/*${suffix}")
+                // Create a file tree with a base directry
+                FileTree tree = project.fileTree(dir: DEFAULT_RESOURCE_PATH, include: "**/*${suffix}")
 
-				// Iterate over the contents of a tree
-				def resourceCandidate = null
-				tree.find { File file ->
-					if(file.getName().contains(resourceName)){
-						logger.info("Found potential " + resourceName + " resource file: " + file.getPath())
-						def idx = file.getPath().indexOf(DEFAULT_RESOURCE_PATH.replace("/", File.separator))
-						resourceCandidate = file.getPath()
-								.substring(idx + DEFAULT_RESOURCE_PATH.length())
-								.replace(File.separator, "/")
-						return true // take this one
-					}
-					return false // not found yet
-				}
+                // Iterate over the contents of a tree
+                def resourceCandidate = null
+                tree.find { File file ->
+                    if (file.getName().contains(resourceName)) {
+                        logger.info("Found potential " + resourceName + " resource file: " + file.getPath())
+                        def idx = file.getPath().indexOf(DEFAULT_RESOURCE_PATH.replace("/", File.separator))
+                        resourceCandidate = file.getPath()
+                                .substring(idx + DEFAULT_RESOURCE_PATH.length())
+                                .replace(File.separator, "/")
+                        return true // take this one
+                    }
+                    return false // not found yet
+                }
 
-				// Still not found?
-				if(resourceCandidate == null){
-					if(mandatory){
-						throw new GradleException("Mandatory '${resourceName}' resource file is missing. No candidate found!")
-					} else {
-						resourceCandidate = ""
-					}
-					logger.info("No optional resource file for '${resourceName}' found. Skipping...")
-				} else {
-					logger.info("Selected resource file for '${resourceName}': ${resourceCandidate}")
-				}
-				return resourceCandidate
-			}
-		} else {
-			def fileName = DEFAULT_RESOURCE_PATH + userDefinedResource
-			def resourceFile = project.file(fileName)
-			if(!resourceFile.exists()){
-				throw new GradleException("Resource file for resource '${resourceName}' does not exist! \nDefault path: ${defaultResourceFile}")
-			}
-			def idx = resourceFile.getPath().indexOf(DEFAULT_RESOURCE_PATH.replace("/", File.separator))
-			return resourceFile.getPath()
-					.substring(idx + DEFAULT_RESOURCE_PATH.length())
-					.replace(File.separator, "/")
-		}
-	}
+                // Still not found?
+                if (resourceCandidate == null) {
+                    if (mandatory) {
+                        throw new GradleException("Mandatory '${resourceName}' resource file is missing. No candidate found!")
+                    } else {
+                        resourceCandidate = ""
+                    }
+                    logger.info("No optional resource file for '${resourceName}' found. Skipping...")
+                } else {
+                    logger.info("Selected resource file for '${resourceName}': ${resourceCandidate}")
+                }
+                return resourceCandidate
+            }
+        } else {
+            def fileName = DEFAULT_RESOURCE_PATH + userDefinedResource
+            def resourceFile = project.file(fileName)
+            if (!resourceFile.exists()) {
+                throw new GradleException("Resource file for resource '${resourceName}' does not exist! \nDefault path: ${defaultResourceFile}")
+            }
+            def idx = resourceFile.getPath().indexOf(DEFAULT_RESOURCE_PATH.replace("/", File.separator))
+            return resourceFile.getPath()
+                    .substring(idx + DEFAULT_RESOURCE_PATH.length())
+                    .replace(File.separator, "/")
+        }
+    }
 
-	def getExtensionDependencies(Project project) {
-		String deps = ""
-		project.extensionConfig.dependencies.extensions.eachWithIndex{  e, i ->
-			if(i != 0){
-				deps += "; "
-			}
-			deps += RMX + e.namespace + "[" + e.version + "]"
-		}
-		return deps
-	}
+    def getExtensionDependencies(Project project) {
+        String deps = ""
+        project.extensionConfig.dependencies.extensions.eachWithIndex { e, i ->
+            if (i != 0) {
+                deps += "; "
+            }
+            deps += RMX + e.namespace + "[" + e.version + "]"
+        }
+        return deps
+    }
 
-	def getRapidMinerDependency(Project project) {
-		def version = getRapidMinerVersion(project)
-		if(project.extensionConfig.dependencies.useAntArtifact){
-			return "com.rapidminer.studio:rapidminer:" + version
-		} else {
-			return "com.rapidminer.studio:rapidminer-studio-core:" + version
-		}
-	}
+    def getRapidMinerDependency(Project project) {
+        def version = getRapidMinerVersion(project)
+        if (project.extensionConfig.dependencies.useAntArtifact) {
+            return "com.rapidminer.studio:rapidminer:" + version
+        } else {
+            return "com.rapidminer.studio:rapidminer-studio-core:" + version
+        }
+    }
 
-	def getRapidMinerVersion(Project project) {
-		assert project.extensionConfig.dependencies.rapidminer
-		return  project.extensionConfig.dependencies.rapidminer
-	}
+    def getRapidMinerVersion(Project project) {
+        assert project.extensionConfig.dependencies.rapidminer
+        return project.extensionConfig.dependencies.rapidminer
+    }
 
 }
