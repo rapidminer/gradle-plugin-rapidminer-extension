@@ -538,17 +538,25 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
     }
 
     def getRapidMinerDependency(Project project) {
-        def version = getRapidMinerVersion(project)
-        if (project.extensionConfig.dependencies.useAntArtifact) {
-            return "com.rapidminer.studio:rapidminer:" + version
+        if (project.extensionConfig.dependencies.project) {
+            return project.extensionConfig.dependencies.project
         } else {
-            return "com.rapidminer.studio:rapidminer-studio-core:" + version
+            def version = getRapidMinerVersion(project)
+            if (project.extensionConfig.dependencies.useAntArtifact) {
+                return "com.rapidminer.studio:rapidminer:" + version
+            } else {
+                return "com.rapidminer.studio:rapidminer-studio-core:" + version
+            }
         }
     }
 
     def getRapidMinerVersion(Project project) {
-        assert project.extensionConfig.dependencies.rapidminer
-        return project.extensionConfig.dependencies.rapidminer
+        if (project.extensionConfig.dependencies.project) {
+            return project.extensionConfig.dependencies.project.version
+        } else {
+            assert project.extensionConfig.dependencies.rapidminer
+            return project.extensionConfig.dependencies.rapidminer
+        }
     }
 
 }

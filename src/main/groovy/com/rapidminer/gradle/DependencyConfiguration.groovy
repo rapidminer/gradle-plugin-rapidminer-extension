@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.rapidminer.gradle;
+package com.rapidminer.gradle
+
+import org.gradle.api.Project;
 
 /**
  * Resource files and init-class definitions.
@@ -26,6 +28,7 @@ public class DependencyConfiguration {
 	List<ExtensionDependency> extensions = []
 	String rapidminer = '6.0.000'
 	Boolean useAntArtifact = false
+	Project project
 	
 	/**
 	 * Applies the provided closure (e.g. to configure class fields).
@@ -41,6 +44,10 @@ public class DependencyConfiguration {
 	
 	def useAntArtifact(Boolean use) {
 		this.useAntArtifact = use
+	}
+
+	def project(Project projectReference){
+		this.project = projectReference
 	}
 	
 	def extension(extensionDef) {
