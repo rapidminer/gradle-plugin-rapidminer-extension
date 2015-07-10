@@ -1,7 +1,10 @@
 ## Change Log
 
 #### 0.7.1
-* Added a way to specify extension project dependencies
+* Added a way to specify local extension project dependencies
+* Install Process Testing extension when running process tests
+* Only add test dependencies in case process tests are enabled
+* Use 'com.rapidminer.java-publishing' plugin for publishing extension Jars 
 
 #### 0.7.0
 * Added an extension initialization task which creates a fresh extension project setup
