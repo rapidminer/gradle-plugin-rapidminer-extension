@@ -20,16 +20,9 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.file.FileTree
-import org.gradle.api.publish.internal.DefaultPublishingExtension
-import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.api.plugins.JavaPlugin
-import org.gradle.api.publish.plugins.PublishingPlugin
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Sync
 import org.gradle.api.tasks.wrapper.Wrapper
-
-import java.security.cert.Extension
-
 
 /**
  *
