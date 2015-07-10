@@ -28,6 +28,8 @@ import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Sync
 import org.gradle.api.tasks.wrapper.Wrapper
 
+import java.security.cert.Extension
+
 
 /**
  *
@@ -285,11 +287,11 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                 dependencies {
                     junitAnt 'org.apache.ant:ant-junit:1.9.3'
                     testsFromJar group: 'com.rapidminer.studio', name: 'rapidminer-studio-integration-tests', version: '+', classifier: 'test'
-                    project.extensionConfig.dependencies.extensions.each { e ->
+                    project.extensionConfig.dependencies.extensions.each { ExtensionDependency extDep ->
                         if (project.logger.infoEnabled) {
-                            project.logger.info "Adding RapidMiner Extension as test dependency (${e})"
+                            project.logger.info "Adding RapidMiner Extension as test dependency (${extDep})"
                         }
-                        testExtension group: e.group, name: e.namespace, version: '+', classifier: 'all'
+                        testExtension group: extDep.group, name: getExtensionNamespace(extDep), version: '+', classifier: 'all'
                     }
 
                     // add process testing extension as default dependency
@@ -534,7 +536,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
             if (i != 0) {
                 deps += "; "
             }
-            deps += "${RMX}${extDep.namespace}[${getExtensionVersion(extDep)}]"
+            deps += "${RMX}${getExtensionNamespace(extDep)}[${getExtensionVersion(extDep)}]"
         }
         return deps
     }
@@ -549,6 +551,22 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
             return dep.project.version
         } else {
             thrw new GradleException("Missing extension version. Please specify either a version or project dependency for ${dep.namespace}.")
+        }
+    }
+
+    def getExtensionNamespace(ExtensionDependency dep) {
+        if(dep.namespace && dep.project){
+            throw new GradleException("Either specify a namespace or a project. Both is not allowed!")
+        }
+        if(dep.namespace){
+            return dep.namespace
+        } else if(dep.project){
+            if(!dep.project.extensionConfig){
+                throw new GradleException("The project ${dep.project.name} doesn't look like an extension project. Please make sure the Extension Gradle plugin is applied.")
+            }
+            return dep.project.extensionConfig.namespace
+        } else {
+            thrw new GradleException("Missing extension namespace. Please specify either a namespace or project dependency for ${dep.namespace}.")
         }
     }
 

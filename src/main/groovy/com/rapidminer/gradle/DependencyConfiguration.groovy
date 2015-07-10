@@ -58,7 +58,7 @@ public class DependencyConfiguration {
 		extensions << new ExtensionDependency(group: group, namespace: namespace, version: version)
 	}
 
-	def extension(String namespace, Project project, String group = ExtensionConfiguration.DEFAULT_GROUP) {
-		extensions << new ExtensionDependency(group: group, namespace: namespace, project: project)
+	def extension(Project project) {
+		extensions << new ExtensionDependency(project: project)
 	}
 }
