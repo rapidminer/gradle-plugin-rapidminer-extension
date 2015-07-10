@@ -1,6 +1,7 @@
 ## Change Log
 
 #### 0.7.1
+* Added a way to specify extension project dependencies
 
 #### 0.7.0
 * Added an extension initialization task which creates a fresh extension project setup

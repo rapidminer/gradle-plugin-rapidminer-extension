@@ -161,11 +161,15 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                 // add RapidMiner and configured extensions as dependencies
                 dependencies {
                     provided rmDep
-                    extensionConfig.dependencies.extensions.each { e ->
+                    extensionConfig.dependencies.extensions.each { ExtensionDependency extDep ->
                         if (project.logger.infoEnabled) {
-                            project.logger.info "Adding RapidMiner Extension dependency (${e})"
+                            project.logger.info "Adding RapidMiner Extension dependency (${extDep})"
                         }
-                        provided group: e.group, name: e.namespace, version: e.version
+                        if(extDep.project){
+                            provided extDep.project
+                        } else {
+                            provided group: extDep.group, name: extDep.namespace, version: extDep.version
+                        }
                     }
                 }
 
@@ -281,8 +285,6 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                 dependencies {
                     junitAnt 'org.apache.ant:ant-junit:1.9.3'
                     testsFromJar group: 'com.rapidminer.studio', name: 'rapidminer-studio-integration-tests', version: '+', classifier: 'test'
-                    testCompile group: 'com.rapidminer.studio', name: 'rapidminer-studio-core', version: '+'
-                    testCompile group: 'com.rapidminer.studio', name: 'rapidminer-studio-core', version: '+', classifier: 'test'
                     project.extensionConfig.dependencies.extensions.each { e ->
                         if (project.logger.infoEnabled) {
                             project.logger.info "Adding RapidMiner Extension as test dependency (${e})"
@@ -528,13 +530,26 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 
     def getExtensionDependencies(Project project) {
         String deps = ""
-        project.extensionConfig.dependencies.extensions.eachWithIndex { e, i ->
+        project.extensionConfig.dependencies.extensions.eachWithIndex { ExtensionDependency extDep, i ->
             if (i != 0) {
                 deps += "; "
             }
-            deps += RMX + e.namespace + "[" + e.version + "]"
+            deps += "${RMX}${extDep.namespace}[${getExtensionVersion(extDep)}]"
         }
         return deps
+    }
+
+    def getExtensionVersion(ExtensionDependency dep) {
+        if(dep.version && dep.project){
+            throw new GradleException("Either specify a version or a project. Both is not allowed!")
+        }
+        if(dep.version){
+            return dep.version
+        } else if(dep.project){
+            return dep.project.version
+        } else {
+            thrw new GradleException("Missing extension version. Please specify either a version or project dependency for ${dep.namespace}.")
+        }
     }
 
     def getRapidMinerDependency(Project project) {
