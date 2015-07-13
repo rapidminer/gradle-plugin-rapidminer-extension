@@ -79,7 +79,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
             try {
                 apply plugin: 'com.rapidminer.gradle.release'
             } catch (e) {
-                project.logger.error "Could not apply release plugin. Probably the extension is not saved in a Git repository."
+                project.logger.debug "Could not apply release plugin. Probably the extension is not saved in a Git repository."
             }
 
             // Configure extension artifact publications
@@ -279,12 +279,23 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                 // Always use the latest version of core and extension dependencies to ensure compability with most recent versions.
                 dependencies {
                     junitAnt 'org.apache.ant:ant-junit:1.9.3'
-                    testsFromJar group: 'com.rapidminer.studio', name: 'rapidminer-studio-integration-tests', version: '+', classifier: 'test'
+
+                    // Use integration tests project if RapidMiner project dependency was specified
+                    if(project.extensionConfig.dependencies.project){
+                        testCompile dependencies.project(path: ':rapidminer-studio-integration-tests', configuration: 'testArtifacts')
+                    } else {
+                        testsFromJar group: 'com.rapidminer.studio', name: 'rapidminer-studio-integration-tests', version: '+', classifier: 'test'
+                    }
                     project.extensionConfig.dependencies.extensions.each { ExtensionDependency extDep ->
                         if (project.logger.infoEnabled) {
                             project.logger.info "Adding RapidMiner Extension as test dependency (${extDep})"
                         }
-                        testExtension group: extDep.group, name: getExtensionNamespace(extDep), version: '+', classifier: 'all'
+                        // Use extension project dependency if project dependency was specified
+                        if(extDep.project) {
+                            testExtension extDep.project.configurations.shadow
+                        } else {
+                            testExtension group: extDep.group, name: getExtensionNamespace(extDep), version: '+', classifier: 'all'
+                        }
                     }
 
                     // add process testing extension as default dependency
@@ -543,7 +554,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
         } else if(dep.project){
             return dep.project.version
         } else {
-            thrw new GradleException("Missing extension version. Please specify either a version or project dependency for ${dep.namespace}.")
+            throw new GradleException("Missing extension version. Please specify either a version or project dependency for ${dep.namespace}.")
         }
     }
 
@@ -569,9 +580,9 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
         } else {
             def version = getRapidMinerVersion(project)
             if (project.extensionConfig.dependencies.useAntArtifact) {
-                return "com.rapidminer.studio:rapidminer:" + version
+                return "com.rapidminer.studio:rapidminer:${version}"
             } else {
-                return "com.rapidminer.studio:rapidminer-studio-core:" + version
+                return "com.rapidminer.studio:rapidminer-studio-core:${version}"
             }
         }
     }
