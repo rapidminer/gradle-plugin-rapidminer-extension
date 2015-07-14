@@ -282,7 +282,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 
                     // Use integration tests project if RapidMiner project dependency was specified
                     if(project.extensionConfig.dependencies.project){
-                        testCompile dependencies.project(path: ':rapidminer-studio-integration-tests', configuration: 'testArtifacts')
+                        testsFromJar dependencies.project(path: ':rapidminer-studio-integration-tests', configuration: 'testArtifacts')
                     } else {
                         testsFromJar group: 'com.rapidminer.studio', name: 'rapidminer-studio-integration-tests', version: '+', classifier: 'test'
                     }
@@ -333,10 +333,11 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                     doLast {
                         def testResultDir = project.file("${buildDir}/test-results/")
                         if (!testResultDir.exists()) {
+                            project.logger.info "Test result folder does not exist. Creating.."
                             testResultDir.mkdirs()
                         }
-                        configurations.testsFromJar.each {
-                            file ->
+                        configurations.testsFromJar.each { file ->
+                                project.logger.info "Running process tests from $file"
                                 ant.antJunit(printsummary: 'on', fork: 'true', showoutput: 'yes', haltonfailure: 'false') {
                                     formatter(type: 'xml')
                                     batchtest(todir: testResultDir, skipNonTests: 'true') {
