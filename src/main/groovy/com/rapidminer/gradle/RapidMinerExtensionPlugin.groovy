@@ -333,6 +333,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                 runProcessTests {
                     // ensure integration-tests testJar is created before process-tests are started
                     if(project.extensionConfig.dependencies.project){
+                        dependsOn ':rapidminer-studio-integration-tests:build'
                         dependsOn ':rapidminer-studio-integration-tests:testJar'
                     }
                     doLast {
