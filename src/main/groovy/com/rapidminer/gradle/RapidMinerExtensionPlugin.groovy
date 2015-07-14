@@ -283,6 +283,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                     // Use integration tests project if RapidMiner project dependency was specified
                     if(project.extensionConfig.dependencies.project){
                         testsFromJar dependencies.project(path: ':rapidminer-studio-integration-tests', configuration: 'testArtifacts')
+
                     } else {
                         testsFromJar group: 'com.rapidminer.studio', name: 'rapidminer-studio-integration-tests', version: '+', classifier: 'test'
                     }
@@ -330,6 +331,10 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                 ant.taskdef(name: 'antJunit', classname: 'org.apache.tools.ant.taskdefs.optional.junit.JUnitTask', classpath: configurations.junitAnt.asPath)
                 tasks.create('runProcessTests')
                 runProcessTests {
+                    // ensure integration-tests testJar is created before process-tests are started
+                    if(project.extensionConfig.dependencies.project){
+                        dependsOn ':rapidminer-studio-integration-tests:testJar'
+                    }
                     doLast {
                         def testResultDir = project.file("${buildDir}/test-results/")
                         if (!testResultDir.exists()) {
