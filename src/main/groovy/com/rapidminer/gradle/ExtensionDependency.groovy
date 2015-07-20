@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.rapidminer.gradle;
+package com.rapidminer.gradle
+
+import org.gradle.api.Project;
 
 /**
  * Extension dependency definition
@@ -26,4 +28,5 @@ public class ExtensionDependency {
 	String group = ExtensionConfiguration.DEFAULT_GROUP
 	String namespace
 	String version
+	Project project
 }

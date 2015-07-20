@@ -26,7 +26,7 @@ import org.gradle.api.Project;
 public class DependencyConfiguration {
 	
 	List<ExtensionDependency> extensions = []
-	String rapidminer = '6.0.000'
+	String rapidminer = '6.5.0'
 	Boolean useAntArtifact = false
 	Project project
 	
@@ -56,5 +56,9 @@ public class DependencyConfiguration {
 	
 	def extension(String namespace, String version, String group = ExtensionConfiguration.DEFAULT_GROUP) {
 		extensions << new ExtensionDependency(group: group, namespace: namespace, version: version)
+	}
+
+	def extension(Project project) {
+		extensions << new ExtensionDependency(project: project)
 	}
 }

@@ -20,14 +20,9 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.file.FileTree
-import org.gradle.api.publish.internal.DefaultPublishingExtension
-import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.api.plugins.JavaPlugin
-import org.gradle.api.publish.plugins.PublishingPlugin
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Sync
 import org.gradle.api.tasks.wrapper.Wrapper
-
 
 /**
  *
@@ -84,7 +79,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
             try {
                 apply plugin: 'com.rapidminer.gradle.release'
             } catch (e) {
-                project.logger.error "Could not apply release plugin. Probably the extension is not saved in a Git repository."
+                project.logger.debug "Could not apply release plugin. Probably the extension is not saved in a Git repository."
             }
 
             // Configure extension artifact publications
@@ -161,11 +156,15 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                 // add RapidMiner and configured extensions as dependencies
                 dependencies {
                     provided rmDep
-                    extensionConfig.dependencies.extensions.each { e ->
+                    extensionConfig.dependencies.extensions.each { ExtensionDependency extDep ->
                         if (project.logger.infoEnabled) {
-                            project.logger.info "Adding RapidMiner Extension dependency (${e})"
+                            project.logger.info "Adding RapidMiner Extension dependency (${extDep})"
                         }
-                        provided group: e.group, name: e.namespace, version: e.version
+                        if(extDep.project){
+                            provided extDep.project
+                        } else {
+                            provided group: extDep.group, name: extDep.namespace, version: extDep.version
+                        }
                     }
                 }
 
@@ -280,14 +279,24 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                 // Always use the latest version of core and extension dependencies to ensure compability with most recent versions.
                 dependencies {
                     junitAnt 'org.apache.ant:ant-junit:1.9.3'
-                    testsFromJar group: 'com.rapidminer.studio', name: 'rapidminer-studio-integration-tests', version: '+', classifier: 'test'
-                    testCompile group: 'com.rapidminer.studio', name: 'rapidminer-studio-core', version: '+'
-                    testCompile group: 'com.rapidminer.studio', name: 'rapidminer-studio-core', version: '+', classifier: 'test'
-                    project.extensionConfig.dependencies.extensions.each { e ->
+
+                    // Use integration tests project if RapidMiner project dependency was specified
+                    if(project.extensionConfig.dependencies.project){
+                        testsFromJar dependencies.project(path: ':rapidminer-studio-integration-tests', configuration: 'testArtifacts')
+
+                    } else {
+                        testsFromJar group: 'com.rapidminer.studio', name: 'rapidminer-studio-integration-tests', version: '+', classifier: 'test'
+                    }
+                    project.extensionConfig.dependencies.extensions.each { ExtensionDependency extDep ->
                         if (project.logger.infoEnabled) {
-                            project.logger.info "Adding RapidMiner Extension as test dependency (${e})"
+                            project.logger.info "Adding RapidMiner Extension as test dependency (${extDep})"
                         }
-                        testExtension group: e.group, name: e.namespace, version: '+', classifier: 'all'
+                        // Use extension project dependency if project dependency was specified
+                        if(extDep.project) {
+                            testExtension extDep.project.configurations.shadow
+                        } else {
+                            testExtension group: extDep.group, name: getExtensionNamespace(extDep), version: '+', classifier: 'all'
+                        }
                     }
 
                     // add process testing extension as default dependency
@@ -322,13 +331,19 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                 ant.taskdef(name: 'antJunit', classname: 'org.apache.tools.ant.taskdefs.optional.junit.JUnitTask', classpath: configurations.junitAnt.asPath)
                 tasks.create('runProcessTests')
                 runProcessTests {
+                    // ensure integration-tests testJar is created before process-tests are started
+                    if(project.extensionConfig.dependencies.project){
+                        dependsOn ':rapidminer-studio-integration-tests:build'
+                        dependsOn ':rapidminer-studio-integration-tests:testJar'
+                    }
                     doLast {
                         def testResultDir = project.file("${buildDir}/test-results/")
                         if (!testResultDir.exists()) {
+                            project.logger.info "Test result folder does not exist. Creating.."
                             testResultDir.mkdirs()
                         }
-                        configurations.testsFromJar.each {
-                            file ->
+                        configurations.testsFromJar.each { file ->
+                                project.logger.info "Running process tests from $file"
                                 ant.antJunit(printsummary: 'on', fork: 'true', showoutput: 'yes', haltonfailure: 'false') {
                                     formatter(type: 'xml')
                                     batchtest(todir: testResultDir, skipNonTests: 'true') {
@@ -528,13 +543,42 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
 
     def getExtensionDependencies(Project project) {
         String deps = ""
-        project.extensionConfig.dependencies.extensions.eachWithIndex { e, i ->
+        project.extensionConfig.dependencies.extensions.eachWithIndex { ExtensionDependency extDep, i ->
             if (i != 0) {
                 deps += "; "
             }
-            deps += RMX + e.namespace + "[" + e.version + "]"
+            deps += "${RMX}${getExtensionNamespace(extDep)}[${getExtensionVersion(extDep)}]"
         }
         return deps
+    }
+
+    def getExtensionVersion(ExtensionDependency dep) {
+        if(dep.version && dep.project){
+            throw new GradleException("Either specify a version or a project. Both is not allowed!")
+        }
+        if(dep.version){
+            return dep.version
+        } else if(dep.project){
+            return dep.project.version
+        } else {
+            throw new GradleException("Missing extension version. Please specify either a version or project dependency for ${dep.namespace}.")
+        }
+    }
+
+    def getExtensionNamespace(ExtensionDependency dep) {
+        if(dep.namespace && dep.project){
+            throw new GradleException("Either specify a namespace or a project. Both is not allowed!")
+        }
+        if(dep.namespace){
+            return dep.namespace
+        } else if(dep.project){
+            if(!dep.project.extensionConfig){
+                throw new GradleException("The project ${dep.project.name} doesn't look like an extension project. Please make sure the Extension Gradle plugin is applied.")
+            }
+            return dep.project.extensionConfig.namespace
+        } else {
+            throw new GradleException("Missing extension namespace. Please specify either a namespace or project dependency for ${dep.namespace}.")
+        }
     }
 
     def getRapidMinerDependency(Project project) {
@@ -543,9 +587,9 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
         } else {
             def version = getRapidMinerVersion(project)
             if (project.extensionConfig.dependencies.useAntArtifact) {
-                return "com.rapidminer.studio:rapidminer:" + version
+                return "com.rapidminer.studio:rapidminer:${version}"
             } else {
-                return "com.rapidminer.studio:rapidminer-studio-core:" + version
+                return "com.rapidminer.studio:rapidminer-studio-core:${version}"
             }
         }
     }
