@@ -1,6 +1,7 @@
 ## Change Log
 
 #### 0.7.1
+* Increase default RapidMiner version dependency to version 6.5.0
 * Added a way to specify local extension project dependencies
 * Install Process Testing extension when running process tests
 * Only add test dependencies in case process tests are enabled

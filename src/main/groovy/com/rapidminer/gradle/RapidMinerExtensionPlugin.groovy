@@ -577,7 +577,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
             }
             return dep.project.extensionConfig.namespace
         } else {
-            thrw new GradleException("Missing extension namespace. Please specify either a namespace or project dependency for ${dep.namespace}.")
+            throw new GradleException("Missing extension namespace. Please specify either a namespace or project dependency for ${dep.namespace}.")
         }
     }
 
