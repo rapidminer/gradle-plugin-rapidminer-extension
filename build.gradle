@@ -14,7 +14,7 @@ dependencies {
 	
 	// Add shadowJar Gradle plugin which is used to create a shaded extension jar 
 	// that contains all it's dependencies (https://github.com/johnrengelman/shadow)
-	compile 'com.github.jengelman.gradle.plugins:shadow:1.2.1'
+	compile 'com.github.jengelman.gradle.plugins:shadow:1.2.2'
 }
 
 afterEvaluate { license { exclude 'com/rapidminer/extension/template/**/*.java'	} }
