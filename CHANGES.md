@@ -6,6 +6,8 @@
 * Install Process Testing extension when running process tests
 * Only add test dependencies in case process tests are enabled
 * Use 'com.rapidminer.java-publishing' plugin for publishing extension Jars 
+* Updates shadow plugin to version 1.2.2 (fixes Gradle 2.5 issues)
+* Removed deprecated 'rapidminer-extension' and 'com.rapidminer.gradle.extension' plugin names
 
 #### 0.7.0
 * Added an extension initialization task which creates a fresh extension project setup

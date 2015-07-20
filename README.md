@@ -2,8 +2,7 @@
 
 The 'com.rapidminer.extension' plugin is designed to ease the process of creating a RapidMiner extension.
 The plugin...
-* ... applies and configures the RapidMiner Gradle plugins rapidminer-java-basics, rapidminer-code-quality, and rapidminer-release as well as a plugin for creating a shaded/shadow Jar (link).
-* ... adds the extensionJar Maven publication which contains the pure extension jar as well as the shaded/shadow jar.
+* ... applies and configures the RapidMiner Gradle plugins rapidminer-java-basics, rapidminer-java-publishing, rapidminer-code-quality, and rapidminer-release as well as a plugin for creating a shaded/shadow Jar (link).
 * ... adds RapidMiner and configured RapidMiner extensions as provided dependencies 
 * ... ensures that the created extension jars MANIFEST.MF contains valid and correct entries
 
@@ -49,7 +48,7 @@ The plugin...
 		/*
 		 * The Gradle Wrapper version to be installed when invoking the 'wrapper' task.
 		 */
-		wrapperVersion = '2.0'
+		wrapperVersion = '2.5'
 		
 		/*
 		 * Optional block which allows to define the version of RapidMiner to compile against and 
@@ -60,7 +59,7 @@ The plugin...
 			/*
 			 * Defines the minimum version of RapidMiner the extension needs to be loaded. 
 			 * This version will be added to the compile classpath as provided dependency. 
-			 * Default is '6.0.000'.
+			 * Default is '6.5.0'.
 			 */
 			rapidminer '5.3.000'
 			
@@ -159,6 +158,7 @@ The plugin...
 
 ## Applied Plugins
 * com.rapidminer.java-basics
+* com.rapidminer.java-publishing
 * com.rapidminer.code-quality
 * com.rapidminer.release
 * com.github.johnrengelman.shadow
@@ -171,10 +171,6 @@ When executing this task a fresh RapidMiner extension project is setup by using 
 
 ##### installExtension
 This task depends on the _shadow_ task, which creates a Jar containing the extension source code as well as all dependencies (shaded/shadow jar). This jar is copied to %rapidminerHome%/lib/plugins.
-
-##### publishExtension _(incubating)_
-This task depends on the publication tasks of the extensionJar Maven publication.
-It publishes the extension .jar and the shaded extension .jar to the configured Maven repository.
 
 ##### wrapper
 This tasks downloads and installs the Gradle wrapper with the specified Gradle version.
