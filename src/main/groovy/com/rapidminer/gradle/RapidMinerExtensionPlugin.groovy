@@ -275,6 +275,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                     junitAnt
                 }
 
+
                 // Add dependencies for running process tests.
                 // Always use the latest version of core and extension dependencies to ensure compability with most recent versions.
                 dependencies {
@@ -288,13 +289,12 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                         testsFromJar group: 'com.rapidminer.studio', name: 'rapidminer-studio-integration-tests', version: '+', classifier: 'test'
                     }
                     project.extensionConfig.dependencies.extensions.each { ExtensionDependency extDep ->
-                        if (project.logger.infoEnabled) {
-                            project.logger.info "Adding RapidMiner Extension as test dependency (${extDep})"
-                        }
-                        // Use extension project dependency if project dependency was specified
-                        if(extDep.project) {
-                            testExtension extDep.project.configurations.shadow
-                        } else {
+                        if(!extDep.project) {
+                            if (project.logger.infoEnabled) {
+                                project.logger.info "Adding RapidMiner Extension as test dependency (${extDep})"
+                            }
+
+                            // add reference to most recent version of external artifact
                             testExtension group: extDep.group, name: getExtensionNamespace(extDep), version: '+', classifier: 'all'
                         }
                     }
@@ -310,6 +310,13 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                     into "${rmTestHome}/lib/plugins"
                     from shadowJar
                     from configurations.testExtension
+
+                    // Go through all extension dependencies and add all direct project dependencies
+                    project.extensionConfig.dependencies.extensions.each { ExtensionDependency extDep ->
+                        if(extDep.project){
+                            from extDep.project.shadowJar
+                        }
+                    }
                 }
 
                 test {
