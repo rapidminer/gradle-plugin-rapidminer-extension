@@ -315,9 +315,12 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                         from shadowJar
                         from configurations.testExtension
 
-                        // Go through all extension dependencies and add all direct project dependencies
-                        project.extensionConfig.dependencies.extensions.each { ExtensionDependency extDep ->
-                            if(extDep.project){
+                    }
+
+                    // Go through all extension dependencies and add all direct project dependencies
+                    project.extensionConfig.dependencies.extensions.each { ExtensionDependency extDep ->
+                        if (extDep.project) {
+                            into("/lib/plugins") {
                                 from extDep.project.shadowJar
                             }
                         }
