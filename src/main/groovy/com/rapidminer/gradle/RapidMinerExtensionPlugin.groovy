@@ -307,15 +307,26 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                 prepareRMHomeTask.group = 'test'
                 prepareRMHomeTask.description = "Prepares a RapidMiner Home location for extension process testing."
                 prepareRapidMinerHome {
-                    into "${rmTestHome}/lib/plugins"
-                    from shadowJar
-                    from configurations.testExtension
+                    group = 'test'
+                    description = 'Prepares a RapidMiner Home location for process testing.'
 
-                    // Go through all extension dependencies and add all direct project dependencies
-                    project.extensionConfig.dependencies.extensions.each { ExtensionDependency extDep ->
-                        if(extDep.project){
-                            from extDep.project.shadowJar
+                    into "${rmTestHome}"
+                    into ("/lib/plugins") {
+                        from shadowJar
+                        from configurations.testExtension
+
+                        // Go through all extension dependencies and add all direct project dependencies
+                        project.extensionConfig.dependencies.extensions.each { ExtensionDependency extDep ->
+                            if(extDep.project){
+                                from extDep.project.shadowJar
+                            }
                         }
+                    }
+
+                    // copy gradle.properties in case project is present
+                    if(project.extensionConfig.dependencies.project){
+                        def gradlePropFile = project.extensionConfig.dependencies.project.rootProject.file('gradle.properties')
+                        from gradlePropFile
                     }
                 }
 
