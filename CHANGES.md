@@ -1,5 +1,7 @@
 ## Change Log
 
+#### 0.7.2
+
 #### 0.7.1
 * Increase default RapidMiner version dependency to version 6.5.0
 * Added a way to specify local extension project dependencies
