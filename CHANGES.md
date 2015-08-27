@@ -1,6 +1,13 @@
 ## Change Log
 
 #### 0.8.0
+* Removed process testing from 'com.rapidminer.extension' plugin. Please apply 'com.rapidminer.extension.testing' 
+  to re-enable process testing again.
+* Update default Gradle wrapper version to 2.6
+* Removes 'useAntArtifact' configration property. Thus building RapidMiner 5.3 extensions isn't supported anymore.
+* Only add 'initializeExtensionProject' task in case no extension init class is not present
+* Only add 'installExtension' task in case an extension init class is present
+* Removes 'com.rapidminer.release' plugin as it isn't in a usable state yet
 
 #### 0.7.2
 * Changes process test DB repository location URL

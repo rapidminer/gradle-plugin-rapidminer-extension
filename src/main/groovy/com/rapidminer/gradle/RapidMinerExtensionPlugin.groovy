@@ -25,6 +25,7 @@ import org.gradle.api.tasks.Sync
 import org.gradle.api.tasks.wrapper.Wrapper
 
 /**
+ * The main class for tje RapidMiner Extension Gradle plugin which is used by RapidMiner extensions.
  *
  * @author Nils Woehler
  *
@@ -46,6 +47,8 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
     private static final String JAVA_EXTENSION = ".java"
     private static final String XML_EXTENSION = ".xml"
     private static final String PROPERTIES_EXTENSION = ".properties"
+
+    private static final String NOT_FOUND = "\$NOT_FOUND\$"
 
     def Project project
 
@@ -76,12 +79,6 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
             apply plugin: 'com.rapidminer.java-basics'
             apply plugin: 'com.rapidminer.code-quality'
 
-            try {
-                apply plugin: 'com.rapidminer.gradle.release'
-            } catch (e) {
-                project.logger.debug "Could not apply release plugin. Probably the extension is not saved in a Git repository."
-            }
-
             // Configure extension artifact publications
             project.logger.info "Configuring extension publication by adding 'all' artifacts and fixing artifactId."
             publication {
@@ -98,53 +95,61 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
             // This ensures that newer versions of compile dependencies do overwrite older versions from provided configuration.
             configurations { compile.extendsFrom project.configurations.provided }
 
-            defaultTasks 'installExtension'
-
-            // Create 'install' task, will be configured later
-            // Copies extension jar created by 'jar' task to the '/lib/plugins' directory of RapidMiner
-            def installTask = tasks.create(name: 'installExtension', type: Copy, dependsOn: 'shadowJar')
-            installTask.group = EXTENSION_GROUP
-            installTask.description = "Create a jar bundled with all dependencies and copies the jar" +
-                    " to the configured 'extensionFolder'. By default the extension is copied to '~/.RapidMiner/extensions'."
-
-            // configure install task
-            installExtension {
-                into getExtensionInstallFolder(project)
-                from shadowJar
-            }
-
             // add and configure Gradle wrapper task
             def wrapperTask = tasks.create(name: 'wrapper', type: Wrapper)
             wrapperTask.description = "Adds/Updates the Gradle wrapper."
             wrapper { gradleVersion = "${extensionConfig.wrapperVersion}" }
 
-            // Add extension initialization task
-            def initTask = tasks.create(name: 'initializeExtensionProject', type: ExtensionInitialization)
-            initTask.group = EXTENSION_GROUP
-            initTask.description = 'Initializes a extension project with all files needed to start the development of a RapidMiner Studio extension.'
+            try {
+                // check whether the init class is already present
+                checkInitClass(project, project.extensionConfig.resources, name, logger)
+
+                // init class present, create 'installExtension' task
+                def installTask = tasks.create(name: 'installExtension', type: Copy, dependsOn: 'shadowJar')
+                installTask.group = EXTENSION_GROUP
+                installTask.description = "Create a jar bundled with all dependencies and copies the jar" +
+                        " to the configured 'extensionFolder'. By default the extension is copied to '~/.RapidMiner/extensions'."
+
+                // configure install task
+                installExtension {
+                    into getExtensionInstallFolder(project)
+                    from shadowJar
+                }
+
+                defaultTasks 'installExtension'
+
+                def checkManifestTask = tasks.create(name: 'checkManifestEntries')
+                checkManifestTask.description = "Checks whether the extension manifest entries are correct."
+
+                checkManifestEntries {
+                    doLast {
+                        if (!project.extensionConfig.name) {
+                            throw new GradleException('No RapidMiner Extension name defined. Define via \'extensionConfig { name $NAME }\'.')
+                        }
+
+                        if (!project.extensionConfig.groupId) {
+                            throw new GradleException('No groupdId defined! Define via \'extensionConfig { groupdId $GROUPID }\'. (default: \'com.rapidminer.extension\')')
+                        }
+                        checkReleaseManifestEntries(project)
+                    }
+                }
+                jar.dependsOn checkManifestEntries
+                shadowJar.dependsOn checkManifestEntries
+
+            } catch (e) {
+
+                // Add extension initialization task if Init class could not be found
+                def initTask = tasks.create(name: 'initializeExtensionProject', type: ExtensionInitialization)
+                initTask.group = EXTENSION_GROUP
+                initTask.description = 'Initializes a extension project with all files needed to start the development of a RapidMiner Studio extension.'
+                initTask.dependsOn wrapper
+
+                defaultTasks 'initializeExtensionProject'
+            }
 
             // define extension group as lazy GString
             // see http://forums.gradle.org/gradle/topics/how_do_you_delay_configuration_of_a_task_by_a_custom_plugin_using_the_extension_method
             group = "${-> project.extensionConfig.groupId}"
-
-            def checkManifestTask = tasks.create(name: 'checkManifestEntries')
-            checkManifestTask.group = EXTENSION_GROUP
-            checkManifestTask.description = "Checks whether the extension manifest entries are correct."
-
-            checkManifestEntries {
-                doLast {
-                    if (!project.extensionConfig.name) {
-                        throw new GradleException('No RapidMiner Extension name defined. Define via \'extensionConfig { name $NAME }\'.')
-                    }
-
-                    if (!project.extensionConfig.groupId) {
-                        throw new GradleException('No groupdId defined! Define via \'extensionConfig { groupdId $GROUPID }\'. (default: \'com.rapidminer.extension\')')
-                    }
-                    checkReleaseManifestEntries(project)
-                }
-            }
-            jar.dependsOn checkManifestEntries
-            shadowJar.dependsOn checkManifestEntries
 
             // Configuring the properties below can only be accomplished after
             // the project extension 'extension' has been configured
@@ -166,11 +171,6 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                             provided group: extDep.group, name: extDep.namespace, version: extDep.version
                         }
                     }
-                }
-
-                // Check if test environment should be configured
-                if (extensionConfig.configureProcessTestEnv && !extensionConfig.dependencies.useAntArtifact) {
-                    configureProcessTestEnvironment(project)
                 }
 
                 // add check for manifest entries to avoid generic 'null' error
@@ -450,7 +450,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
         try {
             return checkInitClass(project, res, name, logger)
         } catch (e) {
-            return "\$NOT_FOUND\$"
+            return NOT_FOUND
         }
     }
 
@@ -504,7 +504,8 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
             return checkResourceFile(resourceName, suffix, userDefinedResource, project, res, name, logger, mandatory, subdirectory)
         } catch (e) {
             logger.info "Could not find resource file for resource '${resourceName}'"
-            return "\$NOT_FOUND\$"
+            return NOT_FOUND
+
         }
     }
 
@@ -607,11 +608,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
             return project.extensionConfig.dependencies.project
         } else {
             def version = getRapidMinerVersion(project)
-            if (project.extensionConfig.dependencies.useAntArtifact) {
-                return "com.rapidminer.studio:rapidminer:${version}"
-            } else {
-                return "com.rapidminer.studio:rapidminer-studio-core:${version}"
-            }
+            return "com.rapidminer.studio:rapidminer-studio-core:${version}"
         }
     }
 

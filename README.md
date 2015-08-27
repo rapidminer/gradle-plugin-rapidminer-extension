@@ -6,7 +6,7 @@ The plugin...
 * ... adds RapidMiner and configured RapidMiner extensions as provided dependencies 
 * ... ensures that the created extension jars MANIFEST.MF contains valid and correct entries
 
-## How to use (requires Gradle 2.3+)
+## How to use (requires Gradle 2.5+)
 	plugins {
 		id 'com.rapidminer.extension' version <plugin version>
 	}
@@ -48,7 +48,7 @@ The plugin...
 		/*
 		 * The Gradle Wrapper version to be installed when invoking the 'wrapper' task.
 		 */
-		wrapperVersion = '2.5'
+		wrapperVersion = '2.6'
 		
 		/*
 		 * Optional block which allows to define the version of RapidMiner to compile against and 
@@ -61,15 +61,7 @@ The plugin...
 			 * This version will be added to the compile classpath as provided dependency. 
 			 * Default is '6.5.0'.
 			 */
-			rapidminer '5.3.000'
-			
-			/*
-			 * Defines whether the old Ant artifact (com.rapidminer.studio:rapidmimer) should be
-			 * used of if the new Maven artifact (com.rapidminer.studio:rapidmimer-studio-core),
-			 * which is available since version 6.0.9, should be used. 
-			 * By default it is set to 'false'.
-			 */
-			useAntArtifact true
+			rapidminer '6.5.0'
 			
 			/*
 			 * Syntax to add dependencies to other RapidMiner extensions.
@@ -160,7 +152,6 @@ The plugin...
 * com.rapidminer.java-basics
 * com.rapidminer.java-publishing
 * com.rapidminer.code-quality
-* com.rapidminer.release
 * com.github.johnrengelman.shadow
 
 ## Added Tasks
