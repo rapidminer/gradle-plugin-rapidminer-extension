@@ -251,9 +251,9 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
         def testProperties = [:]
         testProperties['rapidminer.test.repository.local'] = 'true'
         testProperties['rapidminer.test.repository.location'] = '//junit/'
-        testProperties['rapidminer.test.repository.dbURL'] = 'http://192.168.1.2:8080/'
+        testProperties['rapidminer.test.repository.dbURL'] = 'http://192.168.1.216:8080/'
         testProperties['rapidminer.test.repository.user'] = 'junit'
-        testProperties['rapidminer.test.repository.password'] = 'junit2'
+        testProperties['rapidminer.test.repository.password'] = 'junitjunit2'
         testProperties['rapidminer.test.repository.exclude'] = '.*NOTEST.*'
         testProperties['rapidminer.test.repository.url'] = project.file('test-processes/').absolutePath
         testProperties['rapidminer.home'] = rmTestHome
