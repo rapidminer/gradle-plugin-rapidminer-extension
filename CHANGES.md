@@ -1,5 +1,7 @@
 ## Change Log
 
+#### 0.8.0
+
 #### 0.7.2
 * Changes process test DB repository location URL
 
