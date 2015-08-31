@@ -25,7 +25,7 @@ import org.gradle.api.tasks.Sync
 import org.gradle.api.tasks.wrapper.Wrapper
 
 /**
- * The main class for tje RapidMiner Extension Gradle plugin which is used by RapidMiner extensions.
+ * The main class for the RapidMiner Extension Gradle plugin which is used by RapidMiner extensions.
  *
  * @author Nils Woehler
  *

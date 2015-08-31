@@ -5,7 +5,7 @@
   to re-enable process testing again.
 * Update default Gradle wrapper version to 2.6
 * Removes 'useAntArtifact' configration property. Thus building RapidMiner 5.3 extensions isn't supported anymore.
-* Only add 'initializeExtensionProject' task in case no extension init class is not present
+* Only add 'initializeExtensionProject' task in case extension init class is not present
 * Only add 'installExtension' task in case an extension init class is present
 * Removes 'com.rapidminer.release' plugin as it isn't in a usable state yet
 
