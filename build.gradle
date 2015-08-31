@@ -1,10 +1,6 @@
-plugins {
-	id 'com.rapidminer.gradle-plugin' version '0.3.5'
-}
+plugins { id 'com.rapidminer.gradle-plugin' version '0.3.5' }
 
-gradlePlugin {
-	id 'extension'
-}
+gradlePlugin { id 'extension' }
 
 dependencies {
 	compile 'com.rapidminer.gradle:java-basics:0.3.3'
