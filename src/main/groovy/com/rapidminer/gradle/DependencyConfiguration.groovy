@@ -27,7 +27,6 @@ public class DependencyConfiguration {
 	
 	List<ExtensionDependency> extensions = []
 	String rapidminer = '6.5.0'
-	Boolean useAntArtifact = false
 	Project project
 	
 	/**
@@ -42,10 +41,6 @@ public class DependencyConfiguration {
 		this.rapidminer = version
 	}
 	
-	def useAntArtifact(Boolean use) {
-		this.useAntArtifact = use
-	}
-
 	def project(Project projectReference){
 		this.project = projectReference
 	}

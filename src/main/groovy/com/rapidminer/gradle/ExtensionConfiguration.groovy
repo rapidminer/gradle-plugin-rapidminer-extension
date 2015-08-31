@@ -15,6 +15,8 @@
  */
 package com.rapidminer.gradle
 
+import org.gradle.api.GradleException
+
 /**
  *
  * @author Nils Woehler
@@ -27,15 +29,12 @@ public class ExtensionConfiguration {
 	 */
 	public static final String DEFAULT_GROUP = 'com.rapidminer.extension'
 	
-	public static final String DEFAULT_WRAPPER_VERSION = '2.3'
+	public static final String DEFAULT_WRAPPER_VERSION = '2.6'
 
 	String name
 	String namespace
 	String groupId = DEFAULT_GROUP
 	
-	boolean configureProcessTestEnv = true
-	boolean runProcessTests = true
-
 	String vendor = "RapidMiner GmbH"
 	String homepage = "www.rapidminer.com"
 
@@ -71,7 +70,7 @@ public class ExtensionConfiguration {
 			if(name){
 				return name.toLowerCase().replace(" ", "_")
 			} else {
-				return ''
+				throw new GradleException("Neither an extension name nor a namspace defined!")
 			}
 		}
 		return namespace
