@@ -1,5 +1,7 @@
 ## Change Log
 
+#### 0.8.1
+
 #### 0.8.0
 * Removed process testing from 'com.rapidminer.extension' plugin. Please apply 'com.rapidminer.extension.testing' 
   to re-enable process testing again.
