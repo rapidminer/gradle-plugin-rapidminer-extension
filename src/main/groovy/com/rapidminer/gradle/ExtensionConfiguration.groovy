@@ -15,6 +15,8 @@
  */
 package com.rapidminer.gradle
 
+import org.gradle.api.GradleException
+
 /**
  *
  * @author Nils Woehler
@@ -68,7 +70,7 @@ public class ExtensionConfiguration {
 			if(name){
 				return name.toLowerCase().replace(" ", "_")
 			} else {
-				return ''
+				throw new GradleException("Neither an extension name nor a namspace defined!")
 			}
 		}
 		return namespace
