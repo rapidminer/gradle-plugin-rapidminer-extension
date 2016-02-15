@@ -1,6 +1,9 @@
 ## Change Log
 
 #### 0.8.1
+* Update 'code-quality' plugin to version 0.4.0
+* Update 'java-basics' plugin to version 0.4.0
+* Update 'shadow' plugin to version 1.2.3
 
 #### 0.8.0
 * Removed process testing from 'com.rapidminer.extension' plugin. Please apply 'com.rapidminer.extension.testing' 
