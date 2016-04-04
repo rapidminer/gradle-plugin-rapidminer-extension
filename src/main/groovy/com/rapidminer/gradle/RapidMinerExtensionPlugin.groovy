@@ -274,7 +274,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
         checkInitClass(project, res, name, logger)
 
         // Check for Operator definitions
-        def operatorsResource = checkResourceFile("Operators", XML_EXTENSION, res.operatorDefinition, project, res, name, logger, true)
+        def operatorsResource = checkResourceFile("Operators", XML_EXTENSION, res.operatorDefinition, project, res, name, logger, true, "", "OperatorsDoc")
         def resourceFile = project.file(DEFAULT_RESOURCE_PATH + operatorsResource)
         def docBundle = new XmlSlurper().parse(resourceFile)?.attributes()?.get('docbundle')
         if (!docBundle) {
@@ -293,7 +293,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
         def logger = project.logger
 
         res.initClass = getInitClass(project, res, name, logger)
-        res.operatorDefinition = getResourceFile("Operators", XML_EXTENSION, res.operatorDefinition, project, res, name, logger, true)
+        res.operatorDefinition = getResourceFile("Operators", XML_EXTENSION, res.operatorDefinition, project, res, name, logger, true, "", "OperatorsDoc")
         res.objectDefinition = getResourceFile("ioobjects", XML_EXTENSION, res.objectDefinition, project, res, name, logger)
         res.parseRuleDefinition = getResourceFile("parserules", XML_EXTENSION, res.parseRuleDefinition, project, res, name, logger)
         res.groupProperties = getResourceFile("groups", PROPERTIES_EXTENSION, res.groupProperties, project, res, name, logger)
@@ -357,17 +357,16 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
         }
     }
 
-    def getResourceFile(String resourceName, String suffix, userDefinedResource, Project project, res, name, logger, boolean mandatory = false, String subdirectory = "") {
+    def getResourceFile(String resourceName, String suffix, userDefinedResource, Project project, res, name, logger, boolean mandatory = false, String subdirectory = "", String excludedModifier = null) {
         try {
-            return checkResourceFile(resourceName, suffix, userDefinedResource, project, res, name, logger, mandatory, subdirectory)
+            return checkResourceFile(resourceName, suffix, userDefinedResource, project, res, name, logger, mandatory, subdirectory, excludedModifier)
         } catch (e) {
             logger.info "Could not find resource file for resource '${resourceName}'"
             return NOT_FOUND
-
         }
     }
 
-    def checkResourceFile(String resourceName, String suffix, userDefinedResource, Project project, res, name, logger, boolean mandatory = false, String subdirectory = "") {
+    def checkResourceFile(String resourceName, String suffix, userDefinedResource, Project project, res, name, logger, boolean mandatory = false, String subdirectory = "", String excludedModifier = null) {
         // Check if resource file is user defined
         def defaultResourceFile = RESOURCE_PACKAGE + subdirectory + resourceName + name + suffix
         if (!userDefinedResource) {
@@ -377,6 +376,9 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
             } else {
                 logger.info("Default " + resourceName + " resource file '" + defaultResourceFile + "' not found."
                         + " Searching for alternatives in " + DEFAULT_RESOURCE_PATH + "...")
+                if(excludedModifier) {
+	            	logger.info "Excluding files which contain ${excludedModifier}."
+                }
 
                 // Create a file tree with a base directry
                 FileTree tree = project.fileTree(dir: DEFAULT_RESOURCE_PATH, include: "**/*${suffix}")
@@ -384,7 +386,11 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                 // Iterate over the contents of a tree
                 def resourceCandidate = null
                 tree.find { File file ->
-                    if (file.getName().contains(resourceName)) {
+                	def containsExcludedString = (excludedModifier == null || !file.getName().contains(excludedModifier))
+    				if(excludedModifier) {
+                		logger.info "${file} contains excluded modifier: ${excludedModifier}" 
+    				}
+                    if (file.getName().contains(resourceName) && containsExcludedString) {
                         logger.info("Found potential " + resourceName + " resource file: " + file.getPath())
                         def idx = file.getPath().indexOf(DEFAULT_RESOURCE_PATH.replace("/", File.separator))
                         resourceCandidate = file.getPath()
