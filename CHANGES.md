@@ -1,5 +1,7 @@
 ## Change Log
 
+#### 0.8.2
+
 #### 0.8.1
 * Fixes operators XML resource file guessing in case it is not not present at the default location
 * Update 'code-quality' plugin to version 0.4.0
