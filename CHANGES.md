@@ -1,12 +1,12 @@
 ## Change Log
 
 #### 0.8.1
+* Fixes operators XML resource file guessing in case it is not not present at the default location
 * Update 'code-quality' plugin to version 0.4.0
-* Update 'java-basics' plugin to version 0.4.0
 * Update 'shadow' plugin to version 1.2.3
 
 #### 0.8.0
-* Removed process testing from 'com.rapidminer.extension' plugin. Please apply 'com.rapidminer.extension.testing' 
+* Removed process testing from 'com.rapidminer.extension' plugin. Please apply 'com.rapidminer.extension.testing'
   to re-enable process testing again.
 * Update default Gradle wrapper version to 2.6
 * Removes 'useAntArtifact' configration property. Thus building RapidMiner 5.3 extensions isn't supported anymore.
@@ -22,7 +22,7 @@
 * Added a way to specify local extension project dependencies
 * Install Process Testing extension when running process tests
 * Only add test dependencies in case process tests are enabled
-* Use 'com.rapidminer.java-publishing' plugin for publishing extension Jars 
+* Use 'com.rapidminer.java-publishing' plugin for publishing extension Jars
 * Updates shadow plugin to version 1.2.2 (fixes Gradle 2.5 issues)
 * Removed deprecated 'rapidminer-extension' and 'com.rapidminer.gradle.extension' plugin names
 
@@ -31,9 +31,9 @@
 * Change shadow plugin to latest version (1.2.1) which is compatible with Gradle 2.2+
 * Changes default Gradle wrapper version to 2.3
 * Applying the plugin will only affect the configuration of the project the plugin was applied to. Subprojects need to be configured separately.
-* Added a task that prepares a RapidMiner Home environment for extension process tests 
+* Added a task that prepares a RapidMiner Home environment for extension process tests
 * Added RapidMiner Studio core test artifact as testCompile dependency for running process tests without cloning the RapidMiner Studio Git repository
-* Replaced 'rapidminerHome' extensionConfig property with 'extensionFolder' property. 
+* Replaced 'rapidminerHome' extensionConfig property with 'extensionFolder' property.
   Extensions are now installed into ~/.RapidMiner/extensions by default if the 'extensionFolder' property is not set.
 
 #### 0.6.2
@@ -56,7 +56,7 @@
 * Updates shadow plugin to version 1.0.3
 
 #### 0.5.3
-* Adds Artifactory repository publication configuration 
+* Adds Artifactory repository publication configuration
 * Changes namespace whitespace separator from '-' to '_'
 
 #### 0.5.2
@@ -103,10 +103,10 @@
 * Removes dependency from Artifactory Gradle plugin, only use native 'maven-publish' plugin instead
 
 #### 0.2.3
-* Fixes wrong multi-extension dependency declaration in MANIFEST.MF 
+* Fixes wrong multi-extension dependency declaration in MANIFEST.MF
 
 #### 0.2.2
-* Fixes error when guessing non default named resource files 
+* Fixes error when guessing non default named resource files
 
 #### 0.2.1
 * Fixes "null" namespaces when uploading artifacts with no namespace defined
@@ -120,5 +120,5 @@
 * extensionConfig.homepage is not mandatory anymore (default: www.rapidminer.com)
 * extensionConfig.vendor is not mandatory anymore (default: RapidMiner GmbH)
 
-#### 0.1.0 
+#### 0.1.0
 * Extension release
