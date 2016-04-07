@@ -1,6 +1,7 @@
 ## Change Log
 
 #### 0.8.2
+* Ensure Java 7 compatibility
 
 #### 0.8.1
 * Fixes operators XML resource file guessing in case it is not not present at the default location

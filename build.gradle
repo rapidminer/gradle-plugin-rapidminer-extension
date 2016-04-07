@@ -1,4 +1,4 @@
-plugins { id 'com.rapidminer.gradle-plugin' version '0.4.0' }
+plugins { id 'com.rapidminer.gradle-plugin' version '0.4.1' }
 
 gradlePlugin { id 'extension' }
 
@@ -7,7 +7,7 @@ dependencies {
 	compile 'com.rapidminer.gradle:java-publishing:0.2.0'
 	compile 'com.rapidminer.gradle:code-quality:0.4.0'
 
-	// Add shadowJar Gradle plugin which is used to create a shaded extension jar 
+	// Add shadowJar Gradle plugin which is used to create a shaded extension jar
 	// that contains all it's dependencies (https://github.com/johnrengelman/shadow)
 	compile 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
 }
