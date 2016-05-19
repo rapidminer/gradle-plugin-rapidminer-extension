@@ -26,7 +26,7 @@ import org.gradle.api.Project;
 public class DependencyConfiguration {
 	
 	List<ExtensionDependency> extensions = []
-	String rapidminer = '6.5.0'
+	String rapidminer = '7.1.0'
 	Project project
 	
 	/**

@@ -21,7 +21,6 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.file.FileTree
 import org.gradle.api.tasks.Copy
-import org.gradle.api.tasks.Sync
 import org.gradle.api.tasks.wrapper.Wrapper
 
 /**
@@ -37,7 +36,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
     private static final String RMX = "rmx_"
 
     private static final String DEFAULT_JAVA_PATH = "src/main/java/";
-    private static final String DEFAULT_RESOURCE_PATH = "src/main/resources/";
+    public static final String DEFAULT_RESOURCE_PATH = "src/main/resources/";
     private static final String RAPIDMINER_PACKAGE = "com/rapidminer/";
     private static final String RESOURCE_PACKAGE = RAPIDMINER_PACKAGE + "resources/"
     private static final String I18N_PATH = "i18n/"
@@ -151,6 +150,10 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
             // see http://forums.gradle.org/gradle/topics/how_do_you_delay_configuration_of_a_task_by_a_custom_plugin_using_the_extension_method
             group = "${-> project.extensionConfig.groupId}"
 
+            def createOpTask = tasks.create(name: 'createOperator', type: OperatorCreation)
+            createOpTask.group = EXTENSION_GROUP
+            createOpTask.description = 'Creates a new operator by adding a new Java class, adding the operator documentation and adding the operator to the operators XML.'
+
             // Configuring the properties below can only be accomplished after
             // the project extension 'extension' has been configured
             afterEvaluate {
@@ -221,6 +224,7 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
                         }
                     }
                 }
+
             }
         }
     }
@@ -256,10 +260,6 @@ class RapidMinerExtensionPlugin implements Plugin<Project> {
             resolvedArtifacts += getResolvedArtifacts(it.children)
         }
         return resolvedArtifacts
-    }
-
-    def getArtifactId(Project project) {
-        return project.extensionConfig.namespace
     }
 
     def checkReleaseManifestEntries(Project project) {

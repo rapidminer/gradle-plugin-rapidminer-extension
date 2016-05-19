@@ -49,7 +49,9 @@ class ExtensionInitialization extends DefaultTask {
         }
 
         Console console = System.console()
-        if(console){
+        if(console) {
+            println '> '
+            println '> '
             println '> ################################'
             println '> '
             println '> Initializing a new RapidMiner extension project with following settings: '
@@ -64,11 +66,11 @@ class ExtensionInitialization extends DefaultTask {
             println '> '
             println ''
             def proceed = console.readLine('> Proceed [Y/n]:') ?: 'y'
-            if(!proceed.toLowerCase(Locale.ENGLISH).startsWith('y')){
+            if (!proceed.toLowerCase(Locale.ENGLISH).startsWith('y')) {
                 throw new GradleException('RapidMiner Extension project initialization aborted.')
             }
         } else {
-            throw new GradleException('No console available. Cannot initialize a new RapidMiner Extension project.')
+            throw new GradleException('No console available. Cannot initialize a new RapidMiner Extension project. Please run the command from a command line.')
         }
 
         // create changes folder

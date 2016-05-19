@@ -74,7 +74,7 @@ The plugin...
 		 * Optional block to define resource files. 
 		 * If not defined the resource files will be guessed by a heuristics.
 		 */
-		resource {
+		resources {
 			
 			/*
 			 * Optional parameter that allows to specify the class used for initialization. 
