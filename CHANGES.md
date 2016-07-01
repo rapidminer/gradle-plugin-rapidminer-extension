@@ -1,6 +1,7 @@
 ## Change Log
 
 #### 0.9.1
+* Update 'java-basics' plugin to version 0.4.1
 
 #### 0.9.0
 * Changes Java version compatibility to version 8
