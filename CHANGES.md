@@ -1,6 +1,7 @@
 ## Change Log
 
-#### 0.8.3
+#### 0.9.0
+* Changes Java version compatibility to version 8
 
 #### 0.8.2
 * Ensure Java 7 compatibility
