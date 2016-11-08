@@ -1,5 +1,7 @@
 ## Change Log
 
+#### 0.9.3
+
 #### 0.9.2
 * Update 'java-basics' plugin to version 0.4.2
 
