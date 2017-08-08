@@ -29,7 +29,7 @@ public class ExtensionConfiguration {
 	 */
 	public static final String DEFAULT_GROUP = 'com.rapidminer.extension'
 	
-	public static final String DEFAULT_WRAPPER_VERSION = '2.13'
+	public static final String DEFAULT_WRAPPER_VERSION = '4.1'
 
 	String name
 	String namespace
