@@ -1,6 +1,8 @@
 ## Change Log
 
 #### 0.9.4
+* Updates default Gradle wrapper to version 4.1
+* Improves extension initialization for Gradle 4.0 and above
 
 #### 0.9.3
 * Updates 'java-publishing' plugin to version 0.2.1 to fix Gradle 3.5 incompatibility

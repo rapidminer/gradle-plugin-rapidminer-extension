@@ -48,30 +48,26 @@ class ExtensionInitialization extends DefaultTask {
                     "Found extension init class '$initClass'. Please remove all files except 'build.gradle' and re-run the task.")
         }
 
-        Console console = System.console()
-        if(console) {
-            println '> '
-            println '> '
-            println '> ################################'
-            println '> '
-            println '> Initializing a new RapidMiner extension project with following settings: '
-            println '> '
-            println "> Extension name: $project.extensionConfig.name"
-            println "> Namespace: $project.extensionConfig.namespace"
-            println "> Default package: $project.extensionConfig.groupId"
-            println "> Vendor: $project.extensionConfig.vendor"
-            println "> Homepage: $project.extensionConfig.homepage"
-            println '> '
-            println '> ################################'
-            println '> '
-            println ''
-            def proceed = console.readLine('> Proceed [Y/n]:') ?: 'y'
-            if (!proceed.toLowerCase(Locale.ENGLISH).startsWith('y')) {
-                throw new GradleException('RapidMiner Extension project initialization aborted.')
-            }
-        } else {
-            throw new GradleException('No console available. Cannot initialize a new RapidMiner Extension project. Please run the command from a command line.')
+        println '> '
+        println '> ################################'
+        println '> '
+        println '> Initializing a new RapidMiner extension project with following settings: '
+        println '> '
+        println "> Extension name: $project.extensionConfig.name"
+        println "> Namespace: $project.extensionConfig.namespace"
+        println "> Default package: $project.extensionConfig.groupId"
+        println "> Vendor: $project.extensionConfig.vendor"
+        println "> Homepage: $project.extensionConfig.homepage"
+        println '> '
+        println '> ################################'
+        println '> '
+        ant.input(message: '> Are you sure to initialize the extension with the above settings? Press ENTER to continue.',
+                validargs: 'y,n', addproperty: 'initExtension', defaultValue: 'y')
+
+        if(ant.initExtension && !ant.initExtension.toLowerCase(Locale.ENGLISH).startsWith('y')) {
+            throw new GradleException('RapidMiner Extension project initialization aborted.')
         }
+
 
         // create changes folder
         createFolder('changes/')
